@@ -47,7 +47,10 @@ pyspacemouse = ">=2.0.0, <3"
 [activation]
 scripts = ["pixi_env_setup.sh"]
 
-# For RTX-50xx series
-# [pypi-options.dependency-overrides]
-# torch = ">=2.7.1"
-# torchvision = ">=0.22.1"
+# For RTX-50xx series --> Uncomment the lines below for RTX50xx
+#[pypi-options]
+#extra-index-urls = ["https://download.pytorch.org/whl/nightly/cu128"]
+#index-strategy = "unsafe-best-match"
+#[pypi-options.dependency-overrides]
+#torch = ">=2.8.0.dev0"
+#torchvision = ">=0.23.0.dev0"
