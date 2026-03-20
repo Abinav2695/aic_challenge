@@ -52,5 +52,5 @@ scripts = ["pixi_env_setup.sh"]
 #extra-index-urls = ["https://download.pytorch.org/whl/nightly/cu128"]
 #index-strategy = "unsafe-best-match"
 #[pypi-options.dependency-overrides]
-#torch = ">=2.8.0.dev0,<2.8.0"
-#torchvision = ">=0.23.0.dev0,<0.23.0"
+#torch = ">=2.8.0.dev0,<2.9.0"
+#torchvision = ">=0.23.0.dev0,<0.24.0"
