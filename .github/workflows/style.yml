@@ -23,7 +23,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: Install and run black
+      - name: Install and run ruff
         run: |
-          sudo apt install black -y
-          black --check .
+          pip install ruff
+          ruff format --check .
+          ruff check .

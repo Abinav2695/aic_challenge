@@ -43,6 +43,13 @@ lerobot_teleoperator_devices = { git = "https://github.com/koonpeng/lerobot-ros"
 mujoco = "==3.5.0"
 pynput = ">=1.7.6,<2"
 pyspacemouse = ">=2.0.0, <3"
+ruff = ">=0.15.7, <0.16"
+
+[tasks]
+lint = "ruff check ."
+format = "ruff format ."
+lint-fix = "ruff check --fix ."
+pre-pr = { cmd = "ruff format . && ruff check .", description = "Format and lint before raising a PR" }
 
 [activation]
 scripts = ["pixi_env_setup.sh"]

@@ -37,9 +37,7 @@ from .types import JointMotionUpdateActionDict, MotionUpdateActionDict
 @TeleoperatorConfig.register_subclass("aic_keyboard_joint")
 @dataclass
 class AICKeyboardJointTeleopConfig(KeyboardJointTeleopConfig):
-    arm_action_keys: list[str] = field(
-        default_factory=lambda: [f"{x}" for x in arm_joint_names]
-    )
+    arm_action_keys: list[str] = field(default_factory=lambda: [f"{x}" for x in arm_joint_names])
     high_command_scaling: float = 0.05
     low_command_scaling: float = 0.02
 
@@ -76,12 +74,9 @@ class AICKeyboardJointTeleop(KeyboardJointTeleop):
         self._drain_pressed_keys()
 
         for key, is_pressed in self.current_pressed.items():
-
             if key == "u" and is_pressed:
                 is_low_scaling = self._current_scaling == self._low_scaling
-                self._current_scaling = (
-                    self._high_scaling if is_low_scaling else self._low_scaling
-                )
+                self._current_scaling = self._high_scaling if is_low_scaling else self._low_scaling
                 print(f"Command scaling toggled to: {self._current_scaling}")
                 continue
 
@@ -161,12 +156,9 @@ class AICKeyboardEETeleop(KeyboardEndEffectorTeleop):
         self._drain_pressed_keys()
 
         for key, is_pressed in self.current_pressed.items():
-
             if key == "t" and is_pressed:
                 is_low_speed = self._current_scaling == self._low_scaling
-                self._current_scaling = (
-                    self._high_scaling if is_low_speed else self._low_scaling
-                )
+                self._current_scaling = self._high_scaling if is_low_speed else self._low_scaling
                 print(f"Command scaling toggled to: {self._current_scaling}")
                 continue
 

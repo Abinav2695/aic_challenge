@@ -26,9 +26,7 @@ import contextlib
 
 from isaaclab.app import AppLauncher
 
-parser = argparse.ArgumentParser(
-    description="Record demonstrations for Isaac Lab environments."
-)
+parser = argparse.ArgumentParser(description="Record demonstrations for Isaac Lab environments.")
 parser.add_argument("--task", type=str, required=True, help="Name of the task.")
 parser.add_argument(
     "--teleop_device",
@@ -42,9 +40,7 @@ parser.add_argument(
     default="./datasets/dataset.hdf5",
     help="File path to export recorded demos.",
 )
-parser.add_argument(
-    "--step_hz", type=int, default=30, help="Environment stepping rate in Hz."
-)
+parser.add_argument("--step_hz", type=int, default=30, help="Environment stepping rate in Hz.")
 parser.add_argument(
     "--num_demos",
     type=int,
@@ -77,6 +73,7 @@ import os
 import time
 from collections.abc import Callable
 
+import aic_task.tasks  # noqa: F401
 import gymnasium as gym
 import torch
 
@@ -89,14 +86,11 @@ from isaaclab.devices import (
     Se3SpaceMouseCfg,
 )
 from isaaclab.devices.teleop_device_factory import create_teleop_device
-from isaaclab.envs import DirectRLEnvCfg, ManagerBasedRLEnvCfg
 from isaaclab.envs.mdp.recorders.recorders_cfg import ActionStateRecorderManagerCfg
 from isaaclab.managers import DatasetExportMode
 
 import isaaclab_tasks  # noqa: F401
 from isaaclab_tasks.utils.parse_cfg import parse_env_cfg
-
-import aic_task.tasks  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
@@ -149,9 +143,7 @@ def main() -> None:
         success_term = env_cfg.terminations.success
         env_cfg.terminations.success = None
     else:
-        logger.warning(
-            "No success termination term found. Cannot mark demos as successful."
-        )
+        logger.warning("No success termination term found. Cannot mark demos as successful.")
 
     # Run indefinitely until goal or manual reset
     env_cfg.terminations.time_out = None
@@ -196,17 +188,10 @@ def main() -> None:
 
     # Set up teleop device
     teleop_interface = None
-    if (
-        hasattr(env_cfg, "teleop_devices")
-        and args_cli.teleop_device in env_cfg.teleop_devices.devices
-    ):
-        teleop_interface = create_teleop_device(
-            args_cli.teleop_device, env_cfg.teleop_devices.devices, callbacks
-        )
+    if hasattr(env_cfg, "teleop_devices") and args_cli.teleop_device in env_cfg.teleop_devices.devices:
+        teleop_interface = create_teleop_device(args_cli.teleop_device, env_cfg.teleop_devices.devices, callbacks)
     else:
-        logger.warning(
-            f"No teleop device '{args_cli.teleop_device}' in env config. Creating default."
-        )
+        logger.warning(f"No teleop device '{args_cli.teleop_device}' in env config. Creating default.")
         sensitivity = 1.0
         if args_cli.teleop_device.lower() == "keyboard":
             teleop_interface = Se3Keyboard(
@@ -224,9 +209,7 @@ def main() -> None:
             )
         elif args_cli.teleop_device.lower() == "gamepad":
             teleop_interface = Se3Gamepad(
-                Se3GamepadCfg(
-                    pos_sensitivity=0.1 * sensitivity, rot_sensitivity=0.1 * sensitivity
-                )
+                Se3GamepadCfg(pos_sensitivity=0.1 * sensitivity, rot_sensitivity=0.1 * sensitivity)
             )
         else:
             logger.error(f"Unsupported teleop device: {args_cli.teleop_device}")
@@ -235,10 +218,8 @@ def main() -> None:
             return
 
         for key, cb in callbacks.items():
-            try:
+            with contextlib.suppress(ValueError, TypeError):
                 teleop_interface.add_callback(key, cb)
-            except (ValueError, TypeError):
-                pass
 
     if teleop_interface is None:
         logger.error("Failed to create teleop interface")
@@ -255,9 +236,9 @@ def main() -> None:
 
     print(f"Using teleop device: {teleop_interface}")
     print("Recording demonstrations. Press 'R' to reset/discard current episode.")
-    print(f"Recorded 0 successful demonstrations so far.")
+    print("Recorded 0 successful demonstrations so far.")
 
-    with contextlib.suppress(KeyboardInterrupt) and torch.inference_mode():
+    with contextlib.suppress(KeyboardInterrupt), torch.inference_mode():
         while simulation_app.is_running():
             action = teleop_interface.advance()
             actions = action.repeat(env.num_envs, 1)
@@ -272,9 +253,7 @@ def main() -> None:
                 if bool(success_term.func(env, **success_term.params)[0]):
                     success_step_count += 1
                     if success_step_count >= args_cli.num_success_steps:
-                        env.recorder_manager.record_pre_reset(
-                            [0], force_export_or_skip=False
-                        )
+                        env.recorder_manager.record_pre_reset([0], force_export_or_skip=False)
                         env.recorder_manager.set_success_to_episodes(
                             [0],
                             torch.tensor([[True]], dtype=torch.bool, device=env.device),
@@ -286,25 +265,13 @@ def main() -> None:
                     success_step_count = 0
 
             # Update demo count
-            if (
-                env.recorder_manager.exported_successful_episode_count
-                > current_recorded_demo_count
-            ):
-                current_recorded_demo_count = (
-                    env.recorder_manager.exported_successful_episode_count
-                )
-                print(
-                    f"Recorded {current_recorded_demo_count} successful demonstrations."
-                )
+            if env.recorder_manager.exported_successful_episode_count > current_recorded_demo_count:
+                current_recorded_demo_count = env.recorder_manager.exported_successful_episode_count
+                print(f"Recorded {current_recorded_demo_count} successful demonstrations.")
 
             # Check if target reached
-            if (
-                args_cli.num_demos > 0
-                and current_recorded_demo_count >= args_cli.num_demos
-            ):
-                print(
-                    f"All {current_recorded_demo_count} demonstrations recorded. Exiting."
-                )
+            if args_cli.num_demos > 0 and current_recorded_demo_count >= args_cli.num_demos:
+                print(f"All {current_recorded_demo_count} demonstrations recorded. Exiting.")
                 target_time = time.time() + 0.8
                 while time.time() < target_time:
                     rate_limiter.sleep(env)
@@ -325,9 +292,7 @@ def main() -> None:
             rate_limiter.sleep(env)
 
     env.close()
-    print(
-        f"Recording session completed with {current_recorded_demo_count} successful demonstrations"
-    )
+    print(f"Recording session completed with {current_recorded_demo_count} successful demonstrations")
     print(f"Demonstrations saved to: {args_cli.dataset_file}")
 
 

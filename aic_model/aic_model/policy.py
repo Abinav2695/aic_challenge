@@ -14,10 +14,12 @@
 #  limitations under the License.
 #
 
-import time
+
+from abc import ABC, abstractmethod
+from collections.abc import Callable
+from typing import Protocol
 
 import numpy as np
-from abc import ABC, abstractmethod
 from aic_control_interfaces.msg import (
     JointMotionUpdate,
     MotionUpdate,
@@ -28,9 +30,6 @@ from aic_task_interfaces.msg import Task
 from geometry_msgs.msg import Pose, Vector3, Wrench
 from rclpy.duration import Duration
 from std_msgs.msg import Header
-from tf2_ros.buffer import Buffer
-from tf2_ros.transform_listener import TransformListener
-from typing import Callable, Protocol
 
 GetObservationCallback = Callable[[], Observation]
 

@@ -25,19 +25,20 @@ This script can also be run within the pixi environment.
 
 import sys
 import time
-import rclpy
-from pynput import keyboard
-from rclpy.node import Node
-from rclpy.executors import ExternalShutdownException
+
 import numpy as np
+import rclpy
 from aic_control_interfaces.msg import (
     JointMotionUpdate,
-    TrajectoryGenerationMode,
     TargetMode,
+    TrajectoryGenerationMode,
 )
 from aic_control_interfaces.srv import (
     ChangeTargetMode,
 )
+from pynput import keyboard
+from rclpy.executors import ExternalShutdownException
+from rclpy.node import Node
 
 SLOW_ANGULAR_VEL = 0.075
 FAST_ANGULAR_VEL = 0.2
@@ -156,9 +157,7 @@ class AICTeleoperatorNode(Node):
                 activate_fast_mode = True
                 self.angular_vel = FAST_ANGULAR_VEL
 
-        self.joint_motion_update_publisher.publish(
-            self.generate_joint_motion_update(velocities)
-        )
+        self.joint_motion_update_publisher.publish(self.generate_joint_motion_update(velocities))
 
         # Only print logs if relevant keys are pressed
         if teleop_keys_active:

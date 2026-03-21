@@ -18,21 +18,21 @@
 
 import sys
 import time
-import rclpy
-import numpy as np
-from rclpy.executors import ExternalShutdownException
 
-from control_msgs.action import FollowJointTrajectory
-from rclpy.action import ActionClient
-from rclpy.node import Node
-from trajectory_msgs.msg import JointTrajectoryPoint
+import numpy as np
+import rclpy
 from aic_control_interfaces.msg import (
     MotionUpdate,
-    TrajectoryGenerationMode,
     TargetMode,
+    TrajectoryGenerationMode,
 )
 from aic_control_interfaces.srv import ChangeTargetMode
-from geometry_msgs.msg import Pose, Point, Quaternion, Wrench, Vector3
+from control_msgs.action import FollowJointTrajectory
+from geometry_msgs.msg import Point, Pose, Quaternion
+from rclpy.action import ActionClient
+from rclpy.executors import ExternalShutdownException
+from rclpy.node import Node
+from trajectory_msgs.msg import JointTrajectoryPoint
 
 
 class HomeTrajectoryNode(Node):
@@ -108,16 +108,12 @@ class HomeTrajectoryNode(Node):
                 position=Point(x=-0.4, y=0.2, z=0.3),
                 orientation=Quaternion(x=-0.707, y=-0.707, z=0.0, w=0.0),
             )
-            msg.target_stiffness = np.diag(
-                [100.0, 100.0, 100.0, 50.0, 50.0, 50.0]
-            ).flatten()
+            msg.target_stiffness = np.diag([100.0, 100.0, 100.0, 50.0, 50.0, 50.0]).flatten()
             msg.target_damping = np.diag([40.0, 40.0, 40.0, 15.0, 15.0, 15.0]).flatten()
             msg.wrench_feedback_gains_at_tip = [0.5, 0.5, 0.5, 0.0, 0.0, 0.0]
             msg.trajectory_generation_mode.mode = TrajectoryGenerationMode.MODE_POSITION
             self.publisher.publish(msg)
-            self.get_logger().info(
-                "Published home joint motion update to aic_controller"
-            )
+            self.get_logger().info("Published home joint motion update to aic_controller")
         else:
             goal = FollowJointTrajectory.Goal()
             goal.trajectory.joint_names = [

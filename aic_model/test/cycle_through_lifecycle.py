@@ -16,12 +16,11 @@
 #  limitations under the License.
 #
 
-import rclpy
 import time
 
+import rclpy
 from lifecycle_msgs.msg import Transition
 from lifecycle_msgs.srv import ChangeState, GetState
-from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 
 
@@ -59,19 +58,19 @@ def main(args=None):
         state = node.get_model_state()
         print(f"current state: {state}")
 
-        print(f"configuring...")
+        print("configuring...")
         node.change_model_state(Transition.TRANSITION_CONFIGURE)
         time.sleep(1.0)
 
-        print(f"activating...")
+        print("activating...")
         node.change_model_state(Transition.TRANSITION_ACTIVATE)
         time.sleep(1.0)
 
-        print(f"deactivating...")
+        print("deactivating...")
         node.change_model_state(Transition.TRANSITION_DEACTIVATE)
         time.sleep(1.0)
 
-        print(f"shutting down...")
+        print("shutting down...")
         node.change_model_state(Transition.TRANSITION_INACTIVE_SHUTDOWN)
 
 

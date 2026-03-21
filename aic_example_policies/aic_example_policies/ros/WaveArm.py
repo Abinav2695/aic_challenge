@@ -15,8 +15,9 @@
 #
 
 
-import numpy as np
-
+from aic_task_interfaces.msg import Task
+from geometry_msgs.msg import Point, Pose, Quaternion
+from rclpy.duration import Duration
 
 from aic_model.policy import (
     GetObservationCallback,
@@ -24,14 +25,6 @@ from aic_model.policy import (
     Policy,
     SendFeedbackCallback,
 )
-from aic_control_interfaces.msg import (
-    MotionUpdate,
-    TrajectoryGenerationMode,
-)
-from aic_model_interfaces.msg import Observation
-from aic_task_interfaces.msg import Task
-from geometry_msgs.msg import Point, Pose, Quaternion, Vector3, Wrench
-from rclpy.duration import Duration
 
 
 class WaveArm(Policy):

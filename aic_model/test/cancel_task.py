@@ -17,9 +17,6 @@
 #
 
 import rclpy
-
-from aic_task_interfaces.action import InsertCable
-from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from std_srvs.srv import Empty
 

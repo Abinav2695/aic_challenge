@@ -10,10 +10,13 @@ from dataclasses import MISSING
 import isaaclab.sim as sim_utils
 from isaaclab.actuators import ImplicitActuatorCfg
 from isaaclab.assets import ArticulationCfg, AssetBaseCfg, RigidObjectCfg
-from isaaclab.envs import ManagerBasedRLEnvCfg
-from isaaclab.envs.mdp import JointPositionActionCfg
-from isaaclab.envs.mdp import DifferentialInverseKinematicsActionCfg
 from isaaclab.controllers.differential_ik_cfg import DifferentialIKControllerCfg
+from isaaclab.devices import DevicesCfg
+from isaaclab.devices.gamepad import Se3GamepadCfg
+from isaaclab.devices.keyboard import Se3KeyboardCfg
+from isaaclab.devices.spacemouse import Se3SpaceMouseCfg
+from isaaclab.envs import ManagerBasedRLEnvCfg
+from isaaclab.envs.mdp import DifferentialInverseKinematicsActionCfg
 from isaaclab.managers import ActionTermCfg as ActionTerm
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import ObservationGroupCfg as ObsGroup
@@ -22,17 +25,12 @@ from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.scene import InteractiveSceneCfg
-from isaaclab.utils import configclass
-from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
-from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
 from isaaclab.sensors import TiledCameraCfg
-from isaaclab.devices import DevicesCfg
-from isaaclab.devices.keyboard import Se3KeyboardCfg
-from isaaclab.devices.spacemouse import Se3SpaceMouseCfg
-from isaaclab.devices.gamepad import Se3GamepadCfg
+from isaaclab.utils import configclass
+from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
 
 from . import mdp
-from .mdp.events import randomize_dome_light, randomize_board_and_parts
+from .mdp.events import randomize_board_and_parts, randomize_dome_light
 
 # Resolve asset directory relative to this file (portable across machines)
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -144,9 +142,7 @@ class AICTaskSceneCfg(InteractiveSceneCfg):
     task_board = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/task_board",
         spawn=sim_utils.UsdFileCfg(
-            usd_path=os.path.join(
-                AIC_PARTS_DIR, "Task Board Base", "task_board_rigid.usd"
-            ),
+            usd_path=os.path.join(AIC_PARTS_DIR, "Task Board Base", "task_board_rigid.usd"),
             rigid_props=sim_utils.RigidBodyPropertiesCfg(
                 kinematic_enabled=True,
             ),
@@ -374,12 +370,8 @@ class ObservationsCfg:
         """Observations for policy: joint state, ee pose, pose command."""
 
         # Robot state (joint space)
-        joint_pos = ObsTerm(
-            func=mdp.joint_pos_rel, noise=Unoise(n_min=-0.01, n_max=0.01)
-        )
-        joint_vel = ObsTerm(
-            func=mdp.joint_vel_rel, noise=Unoise(n_min=-0.01, n_max=0.01)
-        )
+        joint_pos = ObsTerm(func=mdp.joint_pos_rel, noise=Unoise(n_min=-0.01, n_max=0.01))
+        joint_vel = ObsTerm(func=mdp.joint_vel_rel, noise=Unoise(n_min=-0.01, n_max=0.01))
         # End-effector pose in env frame (pos xyz + quat wxyz = 7 dims)
         eef_pose = ObsTerm(
             func=mdp.body_pose_w,
@@ -387,9 +379,7 @@ class ObservationsCfg:
             noise=Unoise(n_min=-0.001, n_max=0.001),
         )
         # Command (target ee pose)
-        pose_command = ObsTerm(
-            func=mdp.generated_commands, params={"command_name": "ee_pose"}
-        )
+        pose_command = ObsTerm(func=mdp.generated_commands, params={"command_name": "ee_pose"})
 
         # Body forces
         body_forces = ObsTerm(
@@ -571,21 +561,11 @@ class AICTaskEnvCfg(ManagerBasedRLEnvCfg):
 
         # Override reward/command body to UR end-effector
         ee_body = ["wrist_3_link"]
-        self.rewards.end_effector_position_tracking.params["asset_cfg"].body_names = (
-            ee_body
-        )
-        self.rewards.end_effector_position_tracking_fine_grained.params[
-            "asset_cfg"
-        ].body_names = ee_body
-        self.rewards.end_effector_position_tracking_exp.params[
-            "asset_cfg"
-        ].body_names = ee_body
-        self.rewards.end_effector_orientation_tracking.params[
-            "asset_cfg"
-        ].body_names = ee_body
-        self.rewards.end_effector_orientation_tracking_fine_grained.params[
-            "asset_cfg"
-        ].body_names = ee_body
+        self.rewards.end_effector_position_tracking.params["asset_cfg"].body_names = ee_body
+        self.rewards.end_effector_position_tracking_fine_grained.params["asset_cfg"].body_names = ee_body
+        self.rewards.end_effector_position_tracking_exp.params["asset_cfg"].body_names = ee_body
+        self.rewards.end_effector_orientation_tracking.params["asset_cfg"].body_names = ee_body
+        self.rewards.end_effector_orientation_tracking_fine_grained.params["asset_cfg"].body_names = ee_body
         self.rewards.reaching_bonus.params["asset_cfg"].body_names = ee_body
 
         # # Arm action: joint position control

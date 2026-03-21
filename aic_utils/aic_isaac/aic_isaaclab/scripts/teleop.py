@@ -12,12 +12,8 @@ from collections.abc import Callable
 
 from isaaclab.app import AppLauncher
 
-parser = argparse.ArgumentParser(
-    description="Teleoperation for Isaac Lab environments."
-)
-parser.add_argument(
-    "--num_envs", type=int, default=1, help="Number of environments to simulate."
-)
+parser = argparse.ArgumentParser(description="Teleoperation for Isaac Lab environments.")
+parser.add_argument("--num_envs", type=int, default=1, help="Number of environments to simulate.")
 parser.add_argument(
     "--teleop_device",
     type=str,
@@ -25,9 +21,7 @@ parser.add_argument(
     help="Teleop device. Built-ins: keyboard, spacemouse, gamepad.",
 )
 parser.add_argument("--task", type=str, default=None, help="Name of the task.")
-parser.add_argument(
-    "--sensitivity", type=float, default=1.0, help="Sensitivity factor."
-)
+parser.add_argument("--sensitivity", type=float, default=1.0, help="Sensitivity factor.")
 parser.add_argument(
     "--disable_fabric",
     action="store_true",
@@ -57,6 +51,7 @@ simulation_app = app_launcher.app
 
 import logging
 
+import aic_task.tasks  # noqa: F401
 import gymnasium as gym
 import torch
 
@@ -76,8 +71,6 @@ from isaaclab.managers import TerminationTermCfg as DoneTerm
 import isaaclab_tasks  # noqa: F401
 from isaaclab_tasks.manager_based.manipulation.lift import mdp
 from isaaclab_tasks.utils import parse_env_cfg
-
-import aic_task.tasks  # noqa: F401
 
 if args_cli.enable_pinocchio:
     import isaaclab_tasks.manager_based.locomanipulation.pick_place  # noqa: F401
@@ -102,9 +95,7 @@ def main() -> None:
     # env_cfg.terminations.time_out = None  # disabled: causes simulation view crash with some robots
     if "Lift" in args_cli.task:
         env_cfg.commands.object_pose.resampling_time_range = (1.0e9, 1.0e9)
-        env_cfg.terminations.object_reached_goal = DoneTerm(
-            func=mdp.object_reached_goal
-        )
+        env_cfg.terminations.object_reached_goal = DoneTerm(func=mdp.object_reached_goal)
 
     if args_cli.xr:
         env_cfg = remove_camera_configs(env_cfg)
@@ -152,10 +143,7 @@ def main() -> None:
 
     teleop_interface = None
     try:
-        if (
-            hasattr(env_cfg, "teleop_devices")
-            and args_cli.teleop_device in env_cfg.teleop_devices.devices
-        ):
+        if hasattr(env_cfg, "teleop_devices") and args_cli.teleop_device in env_cfg.teleop_devices.devices:
             teleop_interface = create_teleop_device(
                 args_cli.teleop_device,
                 env_cfg.teleop_devices.devices,
@@ -217,7 +205,6 @@ def main() -> None:
 
     print("Teleoperation started. Press 'R' to reset the environment.")
 
-    step_count = 0
     while simulation_app.is_running():
         try:
             with torch.inference_mode():

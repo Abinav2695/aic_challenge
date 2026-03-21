@@ -60,3 +60,4 @@ alias aic-wrench='cd ~/ws_aic/src/aic && pixi run ros2 topic echo /fts_broadcast
 alias aic-joints='cd ~/ws_aic/src/aic && pixi run ros2 topic echo /joint_states'
 alias aic-tcp='cd ~/ws_aic/src/aic && pixi run ros2 topic echo /aic_controller/controller_state'
 alias aic-imgs='cd ~/ws_aic/src/aic && pixi run ros2 topic hz /center_camera/image'
+alias pre-pr='cd ~/ws_aic/src/aic && pixi run pre-pr'

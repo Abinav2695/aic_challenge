@@ -14,19 +14,16 @@
 #  limitations under the License.
 #
 
-import time
 
-from rclpy.duration import Duration
+from aic_control_interfaces.msg import JointMotionUpdate, TrajectoryGenerationMode
+from aic_task_interfaces.msg import Task
 
-from aic_control_interfaces.msg import JointMotionUpdate
-from aic_control_interfaces.msg import TrajectoryGenerationMode
 from aic_model.policy import (
-    Policy,
     GetObservationCallback,
     MoveRobotCallback,
+    Policy,
     SendFeedbackCallback,
 )
-from aic_task_interfaces.msg import Task
 
 
 class GentleGiant(Policy):

@@ -15,7 +15,6 @@
 #
 
 import os
-from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
 from launch.actions import (
@@ -25,7 +24,7 @@ from launch.actions import (
     SetEnvironmentVariable,
 )
 from launch.conditions import IfCondition, UnlessCondition
-from launch.event_handlers import OnProcessStart, OnProcessExit
+from launch.event_handlers import OnProcessExit, OnProcessStart
 from launch.substitutions import (
     Command,
     FindExecutable,
@@ -395,9 +394,7 @@ def generate_launch_description():
         )
     )
     declared_arguments.append(
-        DeclareLaunchArgument(
-            "launch_rviz", default_value="true", description="Launch RViz?"
-        )
+        DeclareLaunchArgument("launch_rviz", default_value="true", description="Launch RViz?")
     )
     declared_arguments.append(
         DeclareLaunchArgument(
@@ -409,19 +406,13 @@ def generate_launch_description():
         )
     )
     declared_arguments.append(
-        DeclareLaunchArgument(
-            "robot_x", default_value="-0.2", description="Robot spawn X position"
-        )
+        DeclareLaunchArgument("robot_x", default_value="-0.2", description="Robot spawn X position")
     )
     declared_arguments.append(
-        DeclareLaunchArgument(
-            "robot_y", default_value="0.2", description="Robot spawn Y position"
-        )
+        DeclareLaunchArgument("robot_y", default_value="0.2", description="Robot spawn Y position")
     )
     declared_arguments.append(
-        DeclareLaunchArgument(
-            "robot_z", default_value="1.14", description="Robot spawn Z position"
-        )
+        DeclareLaunchArgument("robot_z", default_value="1.14", description="Robot spawn Z position")
     )
     declared_arguments.append(
         DeclareLaunchArgument(
@@ -445,6 +436,4 @@ def generate_launch_description():
         )
     )
 
-    return LaunchDescription(
-        declared_arguments + [OpaqueFunction(function=launch_setup)]
-    )
+    return LaunchDescription(declared_arguments + [OpaqueFunction(function=launch_setup)])

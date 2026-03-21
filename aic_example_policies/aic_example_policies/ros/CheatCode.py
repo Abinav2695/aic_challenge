@@ -16,6 +16,12 @@
 
 
 import numpy as np
+from aic_task_interfaces.msg import Task
+from geometry_msgs.msg import Point, Pose, Quaternion, Transform
+from rclpy.duration import Duration
+from rclpy.time import Time
+from tf2_ros import TransformException
+from transforms3d._gohlketransforms import quaternion_multiply, quaternion_slerp
 
 from aic_model.policy import (
     GetObservationCallback,
@@ -23,13 +29,6 @@ from aic_model.policy import (
     Policy,
     SendFeedbackCallback,
 )
-from aic_model_interfaces.msg import Observation
-from aic_task_interfaces.msg import Task
-from geometry_msgs.msg import Point, Pose, Quaternion, Transform
-from rclpy.duration import Duration
-from rclpy.time import Time
-from tf2_ros import TransformException
-from transforms3d._gohlketransforms import quaternion_multiply, quaternion_slerp
 
 QuaternionTuple = tuple[float, float, float, float]
 
@@ -42,9 +41,7 @@ class CheatCode(Policy):
         self._task = None
         super().__init__(parent_node)
 
-    def _wait_for_tf(
-        self, target_frame: str, source_frame: str, timeout_sec: float = 10.0
-    ) -> bool:
+    def _wait_for_tf(self, target_frame: str, source_frame: str, timeout_sec: float = 10.0) -> bool:
         """Wait for a TF frame to become available."""
         start = self.time_now()
         timeout = Duration(seconds=timeout_sec)
@@ -64,9 +61,7 @@ class CheatCode(Policy):
                     )
                 attempt += 1
                 self.sleep_for(0.1)
-        self.get_logger().error(
-            f"Transform '{source_frame}' not available after {timeout_sec}s"
-        )
+        self.get_logger().error(f"Transform '{source_frame}' not available after {timeout_sec}s")
         return False
 
     def calc_gripper_pose(

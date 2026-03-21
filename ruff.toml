@@ -1,0 +1,38 @@
+# ruff.toml
+line-length = 100
+target-version = "py310"
+exclude = [
+  "aic_utils/aic_isaac",
+]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+
+[lint]
+select = [
+  "E",
+  "F",
+  "I",
+  "W",
+  "UP",
+  "B",
+]
+ignore = [
+  "E501",
+]
+
+[lint.isort]
+known-first-party = [
+  "aic_model",
+  "aic_example_policies",
+  "my_policy_node",
+]
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"aic_bringup/**" = ["B018"]
+"aic_model/**" = ["B006", "B023"]
+"aic_utils/**" = ["B018"]
+"zss_data/**" = ["UP031"]
+"zss_policy/**" = ["UP031"]

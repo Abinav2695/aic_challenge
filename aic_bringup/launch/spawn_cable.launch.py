@@ -153,6 +153,4 @@ def generate_launch_description():
             choices=["sfp_sc_cable", "sfp_sc_cable_reversed"],
         )
     )
-    return LaunchDescription(
-        declared_arguments + [OpaqueFunction(function=launch_setup)]
-    )
+    return LaunchDescription(declared_arguments + [OpaqueFunction(function=launch_setup)])

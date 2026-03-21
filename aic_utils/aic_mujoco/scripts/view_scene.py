@@ -27,8 +27,8 @@ Usage:
     python3 view_scene.py ~/aic_mujoco_world/scene.xml
 """
 
-import sys
 import argparse
+import sys
 from pathlib import Path
 
 try:
@@ -61,7 +61,7 @@ def launch_viewer(scene_path: str):
         model = mujoco.MjModel.from_xml_path(str(scene_path))
         data = mujoco.MjData(model)
 
-        print(f"Scene loaded successfully!")
+        print("Scene loaded successfully!")
         print(f"  Bodies: {model.nbody}")
         print(f"  Joints: {model.njnt}")
         print(f"  DOFs: {model.nv}")

@@ -18,16 +18,28 @@ import os
 
 os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = "1"
 
-import time
 import json
-import torch
-import numpy as np
+import time
+from pathlib import Path
+
 import cv2
 import draccus
-from pathlib import Path
-from typing import Callable, Dict, Any, List
+import numpy as np
+import torch
+from aic_control_interfaces.msg import (
+    MotionUpdate,
+    TrajectoryGenerationMode,
+)
+from aic_model_interfaces.msg import Observation
+from aic_task_interfaces.msg import Task
+from geometry_msgs.msg import Twist, Vector3, Wrench
+from huggingface_hub import snapshot_download
+from lerobot.policies.act.configuration_act import ACTConfig
+
+# LeRobot & Safetensors
+from lerobot.policies.act.modeling_act import ACTPolicy
 from rclpy.node import Node
-from geometry_msgs.msg import Twist, Vector3
+from safetensors.torch import load_file
 
 from aic_model.policy import (
     GetObservationCallback,
@@ -35,20 +47,6 @@ from aic_model.policy import (
     Policy,
     SendFeedbackCallback,
 )
-from aic_model_interfaces.msg import Observation
-from aic_task_interfaces.msg import Task
-
-from aic_control_interfaces.msg import (
-    MotionUpdate,
-    TrajectoryGenerationMode,
-)
-from geometry_msgs.msg import Wrench
-
-# LeRobot & Safetensors
-from lerobot.policies.act.modeling_act import ACTPolicy
-from lerobot.policies.act.configuration_act import ACTConfig
-from safetensors.torch import load_file
-from huggingface_hub import snapshot_download
 
 
 class RunACT(Policy):
@@ -70,7 +68,7 @@ class RunACT(Policy):
         )
 
         # Load Config Manually (Fixes 'Draccus' error by removing unknown 'type' field)
-        with open(policy_path / "config.json", "r") as f:
+        with open(policy_path / "config.json") as f:
             config_dict = json.load(f)
             if "type" in config_dict:
                 del config_dict["type"]
@@ -89,9 +87,7 @@ class RunACT(Policy):
         # -------------------------------------------------------------------------
         # 2. Normalization Stats Loading
         # -------------------------------------------------------------------------
-        stats_path = (
-            policy_path / "policy_preprocessor_step_3_normalizer_processor.safetensors"
-        )
+        stats_path = policy_path / "policy_preprocessor_step_3_normalizer_processor.safetensors"
         stats = load_file(stats_path)
 
         # Helper to extract and shape stats for broadcasting
@@ -148,25 +144,18 @@ class RunACT(Policy):
 
         # 2. Resize
         if scale != 1.0:
-            img_np = cv2.resize(
-                img_np, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA
-            )
+            img_np = cv2.resize(img_np, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
 
         # 3. To Tensor -> Permute (HWC -> CHW) -> Float -> Div(255) -> Batch Dim
         tensor = (
-            torch.from_numpy(img_np)
-            .permute(2, 0, 1)
-            .float()
-            .div(255.0)
-            .unsqueeze(0)
-            .to(device)
+            torch.from_numpy(img_np).permute(2, 0, 1).float().div(255.0).unsqueeze(0).to(device)
         )
 
         # 4. Normalize (Apply Mean/Std)
         # Formula: (x - mean) / std
         return (tensor - mean) / std
 
-    def prepare_observations(self, obs_msg: Observation) -> Dict[str, torch.Tensor]:
+    def prepare_observations(self, obs_msg: Observation) -> dict[str, torch.Tensor]:
         """Convert ROS Observation message into dictionary of normalized tensors."""
 
         # --- Process Cameras ---
@@ -227,9 +216,7 @@ class RunACT(Policy):
         )
 
         # Normalize State
-        raw_state_tensor = (
-            torch.from_numpy(state_np).float().unsqueeze(0).to(self.device)
-        )
+        raw_state_tensor = torch.from_numpy(state_np).float().unsqueeze(0).to(self.device)
         obs["observation.state"] = (raw_state_tensor - self.state_mean) / self.state_std
 
         return obs
@@ -276,12 +263,8 @@ class RunACT(Policy):
             self.get_logger().info(f"Action: {action}")
 
             twist = Twist(
-                linear=Vector3(
-                    x=float(action[0]), y=float(action[1]), z=float(action[2])
-                ),
-                angular=Vector3(
-                    x=float(action[3]), y=float(action[4]), z=float(action[5])
-                ),
+                linear=Vector3(x=float(action[0]), y=float(action[1]), z=float(action[2])),
+                angular=Vector3(x=float(action[3]), y=float(action[4]), z=float(action[5])),
             )
             motion_update = self.set_cartesian_twist_target(twist)
             move_robot(motion_update=motion_update)
@@ -303,9 +286,7 @@ class RunACT(Policy):
         motion_update_msg.target_stiffness = np.diag(
             [100.0, 100.0, 100.0, 50.0, 50.0, 50.0]
         ).flatten()
-        motion_update_msg.target_damping = np.diag(
-            [40.0, 40.0, 40.0, 15.0, 15.0, 15.0]
-        ).flatten()
+        motion_update_msg.target_damping = np.diag([40.0, 40.0, 40.0, 15.0, 15.0, 15.0]).flatten()
 
         motion_update_msg.feedforward_wrench_at_tip = Wrench(
             force=Vector3(x=0.0, y=0.0, z=0.0), torque=Vector3(x=0.0, y=0.0, z=0.0)
@@ -313,8 +294,6 @@ class RunACT(Policy):
 
         motion_update_msg.wrench_feedback_gains_at_tip = [0.5, 0.5, 0.5, 0.0, 0.0, 0.0]
 
-        motion_update_msg.trajectory_generation_mode.mode = (
-            TrajectoryGenerationMode.MODE_VELOCITY
-        )
+        motion_update_msg.trajectory_generation_mode.mode = TrajectoryGenerationMode.MODE_VELOCITY
 
         return motion_update_msg

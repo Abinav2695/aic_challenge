@@ -17,7 +17,6 @@
 #
 
 import rclpy
-
 from action_msgs.msg import GoalStatus
 from aic_task_interfaces.action import InsertCable
 from lifecycle_msgs.msg import State, Transition
@@ -32,9 +31,7 @@ class CreateAndCancelTaskNode(Node):
         super().__init__("test_create_and_cancel_task")
         self.action_client = ActionClient(self, InsertCable, "insert_cable")
         self.get_state_client = self.create_client(GetState, "aic_model/get_state")
-        self.change_state_client = self.create_client(
-            ChangeState, "aic_model/change_state"
-        )
+        self.change_state_client = self.create_client(ChangeState, "aic_model/change_state")
 
     def get_model_state(self):
         future = self.get_state_client.call_async(GetState.Request())

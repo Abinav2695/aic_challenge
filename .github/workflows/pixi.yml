@@ -37,7 +37,8 @@ jobs:
       # only do isort check as black check is already done by other workflows
       - name: style
         run: |
-          isort -c aic_utils/lerobot_robot_aic
+          ruff format --check .
+          ruff check .
       - name: type checks
         run: |
           pyright

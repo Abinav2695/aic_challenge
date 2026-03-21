@@ -26,20 +26,21 @@ This script can also be run within the pixi environment.
 
 import sys
 import time
-import rclpy
-from pynput import keyboard
-from rclpy.node import Node
-from rclpy.executors import ExternalShutdownException
+
 import numpy as np
+import rclpy
 from aic_control_interfaces.msg import (
     MotionUpdate,
-    TrajectoryGenerationMode,
     TargetMode,
+    TrajectoryGenerationMode,
 )
 from aic_control_interfaces.srv import (
     ChangeTargetMode,
 )
-from geometry_msgs.msg import Wrench, Vector3, Twist
+from geometry_msgs.msg import Twist, Vector3, Wrench
+from pynput import keyboard
+from rclpy.executors import ExternalShutdownException
+from rclpy.node import Node
 
 SLOW_LINEAR_VEL = 0.02
 SLOW_ANGULAR_VEL = 0.02

@@ -26,8 +26,9 @@ import os
 import re
 import sys
 import traceback
-import numpy as np
+
 import mujoco
+import numpy as np
 
 
 # --- Robot XML Post-Processing ---
@@ -118,9 +119,7 @@ def postprocess_robot_xml(xml_str):
     )
 
     # 7. Remove the right finger motor actuator line
-    xml_str = re.sub(
-        r'\n\s*<general name="gripper/right_finger_joint_motor"[^>]*/>', "", xml_str
-    )
+    xml_str = re.sub(r'\n\s*<general name="gripper/right_finger_joint_motor"[^>]*/>', "", xml_str)
 
     # 8. Add equality constraint (mimic joint) and sensor sections
     # Note: </mujoco> has 2 leading spaces in the raw XML, so content
@@ -165,9 +164,7 @@ def postprocess_world_xml(xml_str):
     )
 
     # 3. Replace all cable body diaginertia from 0.01 to 1e-6
-    xml_str = xml_str.replace(
-        'diaginertia="0.01 0.01 0.01"', 'diaginertia="1e-6 1e-6 1e-6"'
-    )
+    xml_str = xml_str.replace('diaginertia="0.01 0.01 0.01"', 'diaginertia="1e-6 1e-6 1e-6"')
 
     # 4. Fix cable_connection_1 (SC plug end) diaginertia to 4e-4
     #    cable_connection_1 has mass=0.01 and is the SC plug connector
@@ -208,9 +205,7 @@ def main():
         description="Split aic_world.xml into robot and world with plugin."
     )
     parser.add_argument("--input", default="aic_world.xml", help="Input XML file")
-    parser.add_argument(
-        "--output", default="aic_world_final.xml", help="Output World XML file"
-    )
+    parser.add_argument("--output", default="aic_world_final.xml", help="Output World XML file")
     parser.add_argument("--robot_output", default=None, help="Output Robot XML file")
     parser.add_argument("--scene_output", default=None, help="Output Scene XML file")
     args = parser.parse_args()
@@ -427,9 +422,7 @@ def main():
         source_spec = mujoco.MjSpec.from_file(input_path)
 
         # Helper to recursively copy a body and its children
-        def copy_body_recursive(
-            src_body, dest_parent, skip_bodies=None, reparent_map=None
-        ):
+        def copy_body_recursive(src_body, dest_parent, skip_bodies=None, reparent_map=None):
             """Recursively copy src_body to dest_parent, applying reparent_map.
 
             Args:
@@ -514,9 +507,7 @@ def main():
                     # Find the deferred body in source
                     defer_body = find_body(source_spec.worldbody, defer_name)
                     if defer_body:
-                        print(
-                            f"  Adding deferred body {defer_name} under {src_body.name}"
-                        )
+                        print(f"  Adding deferred body {defer_name} under {src_body.name}")
                         # Copy with modified pose
                         copy_deferred_body(defer_body, new_body, defer_pos, defer_quat)
 
@@ -537,9 +528,7 @@ def main():
             new_body = dest_parent.add_body()
             new_body.name = src_body.name
             new_body.pos = list(new_pos) if new_pos is not None else list(src_body.pos)
-            new_body.quat = (
-                list(new_quat) if new_quat is not None else list(src_body.quat)
-            )
+            new_body.quat = list(new_quat) if new_quat is not None else list(src_body.quat)
             new_body.mass = src_body.mass
             new_body.inertia = list(src_body.inertia)
             new_body.ipos = list(src_body.ipos)
@@ -641,7 +630,7 @@ def main():
                 pos_vals = [float(x) for x in pos_str.split()]
                 pos_vals[2] += 0.05
                 cable_end.set("pos", " ".join(f"{x:.15g}" for x in pos_vals))
-                print(f"Lifted cable_end_0 by 5cm")
+                print("Lifted cable_end_0 by 5cm")
 
             # Update link_1 pose and move it under conn_0
             if rel_pos is not None and rel_quat is not None:
@@ -674,9 +663,7 @@ def main():
                 break
 
         if sc_port_link_name:
-            world_spec.add_exclude(
-                bodyname1=sc_port_link_name, bodyname2="sc_plug_link"
-            )
+            world_spec.add_exclude(bodyname1=sc_port_link_name, bodyname2="sc_plug_link")
             print(f"Added exclusion: {sc_port_link_name} <-> sc_plug_link")
         else:
             print("Warning: Could not find sc_port link for exclusion.")

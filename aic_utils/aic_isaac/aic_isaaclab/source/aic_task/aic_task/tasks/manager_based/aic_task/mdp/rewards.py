@@ -31,16 +31,12 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 
 
-def position_command_error(
-    env: ManagerBasedRLEnv, command_name: str, asset_cfg: SceneEntityCfg
-) -> torch.Tensor:
+def position_command_error(env: ManagerBasedRLEnv, command_name: str, asset_cfg: SceneEntityCfg) -> torch.Tensor:
     """Penalize tracking of the position error using L2-norm."""
     asset: RigidObject = env.scene[asset_cfg.name]
     command = env.command_manager.get_command(command_name)
     des_pos_b = command[:, :3]
-    des_pos_w, _ = combine_frame_transforms(
-        asset.data.root_pos_w, asset.data.root_quat_w, des_pos_b
-    )
+    des_pos_w, _ = combine_frame_transforms(asset.data.root_pos_w, asset.data.root_quat_w, des_pos_b)
     curr_pos_w = asset.data.body_pos_w[:, asset_cfg.body_ids[0]]  # type: ignore
     return torch.norm(curr_pos_w - des_pos_w, dim=1)
 
@@ -52,9 +48,7 @@ def position_command_error_tanh(
     asset: RigidObject = env.scene[asset_cfg.name]
     command = env.command_manager.get_command(command_name)
     des_pos_b = command[:, :3]
-    des_pos_w, _ = combine_frame_transforms(
-        asset.data.root_pos_w, asset.data.root_quat_w, des_pos_b
-    )
+    des_pos_w, _ = combine_frame_transforms(asset.data.root_pos_w, asset.data.root_quat_w, des_pos_b)
     curr_pos_w = asset.data.body_pos_w[:, asset_cfg.body_ids[0]]  # type: ignore
     distance = torch.norm(curr_pos_w - des_pos_w, dim=1)
     return 1 - torch.tanh(distance / std)
@@ -72,9 +66,7 @@ def position_command_error_exp(
     asset: RigidObject = env.scene[asset_cfg.name]
     command = env.command_manager.get_command(command_name)
     des_pos_b = command[:, :3]
-    des_pos_w, _ = combine_frame_transforms(
-        asset.data.root_pos_w, asset.data.root_quat_w, des_pos_b
-    )
+    des_pos_w, _ = combine_frame_transforms(asset.data.root_pos_w, asset.data.root_quat_w, des_pos_b)
     curr_pos_w = asset.data.body_pos_w[:, asset_cfg.body_ids[0]]  # type: ignore
     dist_sq = torch.sum(torch.square(curr_pos_w - des_pos_w), dim=1)
     return torch.exp(-dist_sq / (sigma**2))
@@ -85,9 +77,7 @@ def position_command_error_exp(
 # ---------------------------------------------------------------------------
 
 
-def orientation_command_error(
-    env: ManagerBasedRLEnv, command_name: str, asset_cfg: SceneEntityCfg
-) -> torch.Tensor:
+def orientation_command_error(env: ManagerBasedRLEnv, command_name: str, asset_cfg: SceneEntityCfg) -> torch.Tensor:
     """Penalize orientation error (shortest-path angular distance in rad)."""
     asset: RigidObject = env.scene[asset_cfg.name]
     command = env.command_manager.get_command(command_name)
@@ -129,9 +119,7 @@ def ee_reaching_bonus(
     asset: RigidObject = env.scene[asset_cfg.name]
     command = env.command_manager.get_command(command_name)
     des_pos_b = command[:, :3]
-    des_pos_w, _ = combine_frame_transforms(
-        asset.data.root_pos_w, asset.data.root_quat_w, des_pos_b
-    )
+    des_pos_w, _ = combine_frame_transforms(asset.data.root_pos_w, asset.data.root_quat_w, des_pos_b)
     curr_pos_w = asset.data.body_pos_w[:, asset_cfg.body_ids[0]]  # type: ignore
     distance = torch.norm(curr_pos_w - des_pos_w, dim=1)
     return (distance < threshold).float()
@@ -142,45 +130,31 @@ def ee_reaching_bonus(
 # ---------------------------------------------------------------------------
 
 
-def joint_torques_l2(
-    env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")
-) -> torch.Tensor:
+def joint_torques_l2(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Penalize applied joint torques (L2 squared)."""
     asset: Articulation = env.scene[asset_cfg.name]
-    return torch.sum(
-        torch.square(asset.data.applied_torque[:, asset_cfg.joint_ids]), dim=1
-    )
+    return torch.sum(torch.square(asset.data.applied_torque[:, asset_cfg.joint_ids]), dim=1)
 
 
-def joint_acc_l2(
-    env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")
-) -> torch.Tensor:
+def joint_acc_l2(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Penalize joint accelerations (L2 squared) for smoother motion."""
     asset: Articulation = env.scene[asset_cfg.name]
     return torch.sum(torch.square(asset.data.joint_acc[:, asset_cfg.joint_ids]), dim=1)
 
 
-def joint_pos_limits(
-    env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")
-) -> torch.Tensor:
+def joint_pos_limits(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Penalize joints that exceed their soft position limits."""
     asset: Articulation = env.scene[asset_cfg.name]
     out_of_limits = -(
-        asset.data.joint_pos[:, asset_cfg.joint_ids]
-        - asset.data.soft_joint_pos_limits[:, asset_cfg.joint_ids, 0]
+        asset.data.joint_pos[:, asset_cfg.joint_ids] - asset.data.soft_joint_pos_limits[:, asset_cfg.joint_ids, 0]
     ).clip(max=0.0)
     out_of_limits += (
-        asset.data.joint_pos[:, asset_cfg.joint_ids]
-        - asset.data.soft_joint_pos_limits[:, asset_cfg.joint_ids, 1]
+        asset.data.joint_pos[:, asset_cfg.joint_ids] - asset.data.soft_joint_pos_limits[:, asset_cfg.joint_ids, 1]
     ).clip(min=0.0)
     return torch.sum(out_of_limits, dim=1)
 
 
-def body_lin_acc_l2(
-    env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")
-) -> torch.Tensor:
+def body_lin_acc_l2(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     """Penalize linear acceleration of selected bodies (encourages gentle motion)."""
     asset: Articulation = env.scene[asset_cfg.name]
-    return torch.sum(
-        torch.norm(asset.data.body_lin_acc_w[:, asset_cfg.body_ids, :], dim=-1), dim=1
-    )
+    return torch.sum(torch.norm(asset.data.body_lin_acc_w[:, asset_cfg.body_ids, :], dim=-1), dim=1)

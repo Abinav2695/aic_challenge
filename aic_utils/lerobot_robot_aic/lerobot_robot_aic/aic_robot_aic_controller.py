@@ -18,10 +18,11 @@
 
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from functools import cached_property
 from threading import Thread
-from typing import Any, Callable, TypedDict, cast
+from typing import Any, TypedDict, cast
 
 import cv2
 import numpy as np
@@ -116,9 +117,7 @@ class AICRos2Interface:
     node: Node
     executor: SingleThreadedExecutor
     executor_thread: Thread
-    change_target_mode_client: Client[
-        ChangeTargetMode.Request, ChangeTargetMode.Response
-    ]
+    change_target_mode_client: Client[ChangeTargetMode.Request, ChangeTargetMode.Response]
     motion_update_pub: Publisher[MotionUpdate]
     joint_motion_update_pub: Publisher[JointMotionUpdate]
     controller_state_sub: Subscription[ControllerState]
@@ -138,18 +137,14 @@ class AICRos2Interface:
         logger.set_level(logging.DEBUG)
 
         change_target_mode_client = node.create_client(
-            ChangeTargetMode, f"/aic_controller/change_target_mode"
+            ChangeTargetMode, "/aic_controller/change_target_mode"
         )
 
         while not change_target_mode_client.wait_for_service():
-            node.get_logger().info(
-                f"Waiting for service 'aic_controller/change_target_mode'..."
-            )
+            node.get_logger().info("Waiting for service 'aic_controller/change_target_mode'...")
             time.sleep(1.0)
 
-        motion_update_pub = node.create_publisher(
-            MotionUpdate, "/aic_controller/pose_commands", 10
-        )
+        motion_update_pub = node.create_publisher(MotionUpdate, "/aic_controller/pose_commands", 10)
 
         joint_motion_update_pub = node.create_publisher(
             JointMotionUpdate, "/aic_controller/joint_commands", 10
@@ -219,18 +214,14 @@ class AICRobotAICController(Robot):
         req = ChangeTargetMode.Request()
         req.target_mode.mode = mode
 
-        self.ros2_interface.logger.info(
-            f"Sending request to change control mode to {mode}"
-        )
+        self.ros2_interface.logger.info(f"Sending request to change control mode to {mode}")
 
         response = self.ros2_interface.change_target_mode_client.call(req)
 
         if not response or not response.success:
             self.ros2_interface.logger.info(f"Failed to change control mode to {mode}")
         else:
-            self.ros2_interface.logger.info(
-                f"Successfully changed control mode to {mode}"
-            )
+            self.ros2_interface.logger.info(f"Successfully changed control mode to {mode}")
 
         time.sleep(0.5)
 
@@ -239,14 +230,8 @@ class AICRobotAICController(Robot):
         return {
             cam: (
                 # assuming that opencv2 rounds down when being asked to scale without perfect ratio
-                int(
-                    self.config.cameras[cam].height
-                    * self.config.camera_image_scaling[cam]
-                ),
-                int(
-                    self.config.cameras[cam].width
-                    * self.config.camera_image_scaling[cam]
-                ),
+                int(self.config.cameras[cam].height * self.config.camera_image_scaling[cam]),
+                int(self.config.cameras[cam].width * self.config.camera_image_scaling[cam]),
                 3,
             )
             for cam in self.cameras
@@ -283,9 +268,7 @@ class AICRobotAICController(Robot):
         def joint_states_cb(msg: JointState):
             self.last_joint_states = msg
 
-        self.ros2_interface = AICRos2Interface.connect(
-            controller_state_cb, joint_states_cb
-        )
+        self.ros2_interface = AICRos2Interface.connect(controller_state_cb, joint_states_cb)
 
         change_mode_req = (
             TargetMode.MODE_JOINT
@@ -370,9 +353,7 @@ class AICRobotAICController(Robot):
                     logger.debug(
                         f"Camera {cam_key} data is empty (camera not ready yet?), using all-black placeholder."
                     )
-                    cam_obs[cam_key] = np.zeros(
-                        self._cameras_ft[cam_key], dtype=np.uint8
-                    )
+                    cam_obs[cam_key] = np.zeros(self._cameras_ft[cam_key], dtype=np.uint8)
             except Exception as e:
                 logger.error(f"Failed to read camera {cam_key}: {e}")
 

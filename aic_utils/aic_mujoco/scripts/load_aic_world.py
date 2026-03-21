@@ -26,10 +26,10 @@ Usage:
     python3 convert_world.py /tmp/aic.sdf ~/aic_mujoco_world
 """
 
-import sys
 import argparse
-import subprocess
 import os
+import subprocess
+import sys
 from pathlib import Path
 
 

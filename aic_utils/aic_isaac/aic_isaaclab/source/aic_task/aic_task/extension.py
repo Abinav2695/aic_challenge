@@ -3,14 +3,13 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-import omni.ext
 import os
+
+import omni.ext
 
 EXTENSION_PATH = os.path.dirname(os.path.abspath(__file__))
 # source/aic_task/aic_task/tasks/manager_based/aic_task/Intrinsic_assets/assets
-ASSETS_PATH = os.path.join(
-    EXTENSION_PATH, "tasks/manager_based/aic_task/Intrinsic_assets", "assets"
-)
+ASSETS_PATH = os.path.join(EXTENSION_PATH, "tasks/manager_based/aic_task/Intrinsic_assets", "assets")
 
 
 # Any class derived from `omni.ext.IExt` in top level module (defined in `python.modules` of `extension.toml`) will be
@@ -27,15 +26,9 @@ class ExampleExtension(omni.ext.IExt):
             with omni.ui.VStack():
                 # label = omni.ui.Label("AIC Debug")
                 with omni.ui.VStack():
-                    omni.ui.Button(
-                        "Import Plugs", height=50, clicked_fn=self.import_plugs
-                    )
-                    omni.ui.Button(
-                        "Create Cable", height=50, clicked_fn=self.create_cable
-                    )
-                    omni.ui.Button(
-                        "Reset Orient", height=50, clicked_fn=self.reset_orient_op_type
-                    )
+                    omni.ui.Button("Import Plugs", height=50, clicked_fn=self.import_plugs)
+                    omni.ui.Button("Create Cable", height=50, clicked_fn=self.create_cable)
+                    omni.ui.Button("Reset Orient", height=50, clicked_fn=self.reset_orient_op_type)
 
     def on_shutdown(self):
         print("[aic_task] shutdown")
@@ -43,17 +36,15 @@ class ExampleExtension(omni.ext.IExt):
     def create_cable(self):
         print("[aic_task] create_cable")
 
-        from pxr import Usd, UsdGeom, Gf, UsdPhysics, UsdShade, Sdf, PhysxSchema
-        from omni.physx.scripts import physicsUtils
         import omni.usd
+        from omni.physx.scripts import physicsUtils
+        from pxr import Gf, PhysxSchema, Sdf, UsdGeom, UsdPhysics, UsdShade
 
         stage = omni.usd.get_context().get_stage()
 
         # configure ropes (all units in meters):
         linkRadius = 0.003  # capsule radius
-        linkHalfLength = (
-            0.02  # capsule cylindrical height; increase to use fewer, longer links
-        )
+        linkHalfLength = 0.02  # capsule cylindrical height; increase to use fewer, longer links
         capsuleHeight = 1.5 * linkHalfLength + linkRadius
         ropeLength = 0.5  # total rope length
         ropeColor = Gf.Vec3f(0.1, 0.5, 0.1)
@@ -75,9 +66,7 @@ class ExampleExtension(omni.ext.IExt):
 
         # Define PhysicsMaterial prim for the rope
         UsdShade.Material.Define(stage, f"{prim_path}/PhysicsMaterial")
-        material = UsdPhysics.MaterialAPI.Apply(
-            stage.GetPrimAtPath(f"{prim_path}/PhysicsMaterial")
-        )
+        material = UsdPhysics.MaterialAPI.Apply(stage.GetPrimAtPath(f"{prim_path}/PhysicsMaterial"))
         material.CreateStaticFrictionAttr().Set(0.1)
         material.CreateDynamicFrictionAttr().Set(0.1)
         material.CreateRestitutionAttr().Set(0)
@@ -117,9 +106,7 @@ class ExampleExtension(omni.ext.IExt):
             physxCollisionAPI = PhysxSchema.PhysxCollisionAPI.Apply(prim)
             physxCollisionAPI.CreateRestOffsetAttr().Set(0.0)
             physxCollisionAPI.CreateContactOffsetAttr().Set(contactOffset)
-            physicsUtils.add_physics_material_to_prim(
-                stage, prim, f"{prim_path}/PhysicsMaterial"
-            )
+            physicsUtils.add_physics_material_to_prim(stage, prim, f"{prim_path}/PhysicsMaterial")
 
         # Create one joint prim per consecutive link pair
         for linkInd in range(numLinks - 1):
@@ -163,9 +150,7 @@ class ExampleExtension(omni.ext.IExt):
         physxCollisionAPI = PhysxSchema.PhysxCollisionAPI.Apply(sc_plug_prim)
         physxCollisionAPI.CreateRestOffsetAttr().Set(0.0)
         physxCollisionAPI.CreateContactOffsetAttr().Set(contactOffset)
-        physicsUtils.add_physics_material_to_prim(
-            stage, sc_plug_prim, f"{prim_path}/PhysicsMaterial"
-        )
+        physicsUtils.add_physics_material_to_prim(stage, sc_plug_prim, f"{prim_path}/PhysicsMaterial")
 
         # make sc_plug_prim an articulation root
         # UsdPhysics.ArticulationRootAPI.Apply(sc_plug_prim)
@@ -181,12 +166,10 @@ class ExampleExtension(omni.ext.IExt):
         physxCollisionAPI = PhysxSchema.PhysxCollisionAPI.Apply(lc_plug_prim)
         physxCollisionAPI.CreateRestOffsetAttr().Set(0.0)
         physxCollisionAPI.CreateContactOffsetAttr().Set(contactOffset)
-        physicsUtils.add_physics_material_to_prim(
-            stage, lc_plug_prim, f"{prim_path}/PhysicsMaterial"
-        )
+        physicsUtils.add_physics_material_to_prim(stage, lc_plug_prim, f"{prim_path}/PhysicsMaterial")
 
     def import_plugs(self):
-        from pxr import Gf, UsdGeom, UsdPhysics, Sdf
+        from pxr import Gf
 
         print(f"Extension Path: {EXTENSION_PATH}")
 
@@ -203,9 +186,7 @@ class ExampleExtension(omni.ext.IExt):
         sc_plug_prim.GetAttribute("xformOp:translate").Set(Gf.Vec3d(0, 0, 0))
         sc_plug_prim.GetAttribute("xformOp:orient").Set(Gf.Quatf(0, 0, 0, -1.0))
         sc_plug_prim.GetAttribute("xformOp:scale").Set(Gf.Vec3d(0.01, 0.01, 0.01))
-        sc_plug_prim.GetAttribute("xformOpOrder").Set(
-            ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
-        )
+        sc_plug_prim.GetAttribute("xformOpOrder").Set(["xformOp:translate", "xformOp:orient", "xformOp:scale"])
 
         # add lc plug: LC Plug/lc_plug_assemble.usd
         ropeLength = 0.55
@@ -216,9 +197,7 @@ class ExampleExtension(omni.ext.IExt):
         lc_plug_prim.GetAttribute("xformOp:translate").Set(Gf.Vec3d(ropeLength, 0, 0))
         lc_plug_prim.GetAttribute("xformOp:orient").Set(Gf.Quatf(0.7071, 0, 0, -0.7071))
         lc_plug_prim.GetAttribute("xformOp:scale").Set(Gf.Vec3d(0.01, 0.01, 0.01))
-        lc_plug_prim.GetAttribute("xformOpOrder").Set(
-            ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
-        )
+        lc_plug_prim.GetAttribute("xformOpOrder").Set(["xformOp:translate", "xformOp:orient", "xformOp:scale"])
 
         # # add stp_module: SFP Module/sfp_module_visual.usd
         # stp_module_file_path = os.path.join(ASSETS_PATH, "SFP Module", "sfp_module_visual.usd")
@@ -232,12 +211,10 @@ class ExampleExtension(omni.ext.IExt):
 
     def reset_orient_op_type(self):
         import omni.usd
-        from pxr import UsdGeom, Gf, Sdf
+        from pxr import Gf, Sdf
 
         stage = omni.usd.get_context().get_stage()
-        prim = stage.GetPrimAtPath(
-            "/World/ur5e/cable_0218/lc_plug_visual"
-        )  # <-- change to your prim path
+        prim = stage.GetPrimAtPath("/World/ur5e/cable_0218/lc_plug_visual")  # <-- change to your prim path
 
         # Step 1: Read the current quatf value
         orient_attr = prim.GetAttribute("xformOp:orient")
@@ -245,9 +222,7 @@ class ExampleExtension(omni.ext.IExt):
         print(f"Before: {quatf_val}, type: {orient_attr.GetTypeName()}")  # quatf
 
         # Step 2: Convert Gf.Quatf → Gf.Quatd
-        quatd_val = Gf.Quatd(
-            float(quatf_val.GetReal()), Gf.Vec3d(*quatf_val.GetImaginary())
-        )
+        quatd_val = Gf.Quatd(float(quatf_val.GetReal()), Gf.Vec3d(*quatf_val.GetImaginary()))
 
         # Step 3: Remove the old quatf attribute from the edit target layer
         edit_layer = stage.GetEditTarget().GetLayer()

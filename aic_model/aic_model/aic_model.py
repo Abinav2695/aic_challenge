@@ -17,21 +17,17 @@
 
 import importlib
 import inspect
-import numpy as np
-import rclpy
 import threading
 
+import rclpy
 from aic_control_interfaces.msg import (
     JointMotionUpdate,
     MotionUpdate,
-    TrajectoryGenerationMode,
     TargetMode,
 )
 from aic_control_interfaces.srv import ChangeTargetMode
 from aic_model_interfaces.msg import Observation
 from aic_task_interfaces.action import InsertCable
-from aic_task_interfaces.msg import Task
-from geometry_msgs.msg import Point, Pose, Quaternion, Wrench, Vector3
 from rclpy.action import ActionServer, CancelResponse, GoalResponse
 from rclpy.action.server import ServerGoalHandle
 from rclpy.callback_groups import ReentrantCallbackGroup
@@ -39,24 +35,19 @@ from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
 from rclpy.lifecycle import (
     LifecycleNode,
     LifecycleState,
-    LifecyclePublisher,
     TransitionCallbackReturn,
 )
-from rclpy.node import Node
 from rclpy.task import Future
 from std_srvs.srv import Empty
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
-from trajectory_msgs.msg import JointTrajectoryPoint
 
 
 class AicModel(LifecycleNode):
     def __init__(self):
         super().__init__("aic_model")
         self.declare_parameter("policy", "WaveArm")
-        policy_module_name = (
-            self.get_parameter("policy").get_parameter_value().string_value
-        )
+        policy_module_name = self.get_parameter("policy").get_parameter_value().string_value
         self.get_logger().info(f"Loading policy module: {policy_module_name}")
         try:
             policy_module = importlib.import_module(policy_module_name)
@@ -79,13 +70,9 @@ class AicModel(LifecycleNode):
             raise LookupError(expected_policy_class_name)
 
         self._tf_buffer = Buffer()
-        self._tf_listener = TransformListener(
-            buffer=self._tf_buffer, node=self, spin_thread=True
-        )
+        self._tf_listener = TransformListener(buffer=self._tf_buffer, node=self, spin_thread=True)
 
-        self.cancel_service = self.create_service(
-            Empty, "cancel_task", self.cancel_task_callback
-        )
+        self.cancel_service = self.create_service(Empty, "cancel_task", self.cancel_task_callback)
         self.goal_handle = None
         self.is_active = False
         self.observation_sub = self.create_subscription(
@@ -117,7 +104,7 @@ class AicModel(LifecycleNode):
 
     def on_configure(self, state: LifecycleState) -> TransitionCallbackReturn:
         self.get_logger().info(f"on_configure({state})")
-        self.get_logger().info(f"Instantiating policy...")
+        self.get_logger().info("Instantiating policy...")
         try:
             self._policy = self._policy_class(self)
         except Exception as e:
@@ -126,7 +113,7 @@ class AicModel(LifecycleNode):
         return TransitionCallbackReturn.SUCCESS
 
     def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
-        self.get_logger().info(f"on_activate()")
+        self.get_logger().info("on_activate()")
         self.is_active = True
         return super().on_activate(state)
 
@@ -223,9 +210,7 @@ class AicModel(LifecycleNode):
         elif joint_motion_update is not None:
             return self.handle_joint_motion_update(joint_motion_update)
         else:
-            self.get_logger().error(
-                "Either motion_update or joint_motion_update must be provided."
-            )
+            self.get_logger().error("Either motion_update or joint_motion_update must be provided.")
             return False
 
     def send_feedback(self, goal_handle, feedback):
@@ -298,9 +283,7 @@ class AicModel(LifecycleNode):
 
             # Check if the task has been completed.
             if not self._action_thread.is_alive():
-                self.get_logger().info(
-                    f"insert_cable() returned {self._action_thread_result}"
-                )
+                self.get_logger().info(f"insert_cable() returned {self._action_thread_result}")
                 goal_handle.succeed()
                 result = InsertCable.Result()
                 result.success = self._action_thread_result

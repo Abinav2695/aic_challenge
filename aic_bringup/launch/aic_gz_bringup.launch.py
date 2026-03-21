@@ -32,7 +32,6 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import (
     Command,
     FindExecutable,
-    IfElseSubstitution,
     LaunchConfiguration,
     PathJoinSubstitution,
     PythonExpression,
@@ -48,9 +47,7 @@ def on_aic_engine_exit(event, context):
     if event.returncode != 0:
         raise RuntimeError(f"aic_engine exited with code {event.returncode}")
     return EmitEvent(
-        event=Shutdown(
-            reason=f"aic_engine exited cleanly with code {event.returncode})"
-        )
+        event=Shutdown(reason=f"aic_engine exited cleanly with code {event.returncode})")
     )
 
 
@@ -525,9 +522,7 @@ def generate_launch_description():
         )
     )
     declared_arguments.append(
-        DeclareLaunchArgument(
-            "launch_rviz", default_value="true", description="Launch RViz?"
-        )
+        DeclareLaunchArgument("launch_rviz", default_value="true", description="Launch RViz?")
     )
     declared_arguments.append(
         DeclareLaunchArgument(
@@ -578,19 +573,13 @@ def generate_launch_description():
         )
     )
     declared_arguments.append(
-        DeclareLaunchArgument(
-            "robot_x", default_value="-0.2", description="Robot spawn X position"
-        )
+        DeclareLaunchArgument("robot_x", default_value="-0.2", description="Robot spawn X position")
     )
     declared_arguments.append(
-        DeclareLaunchArgument(
-            "robot_y", default_value="0.2", description="Robot spawn Y position"
-        )
+        DeclareLaunchArgument("robot_y", default_value="0.2", description="Robot spawn Y position")
     )
     declared_arguments.append(
-        DeclareLaunchArgument(
-            "robot_z", default_value="1.14", description="Robot spawn Z position"
-        )
+        DeclareLaunchArgument("robot_z", default_value="1.14", description="Robot spawn Z position")
     )
     declared_arguments.append(
         DeclareLaunchArgument(
@@ -761,6 +750,4 @@ def generate_launch_description():
         )
     )
 
-    return LaunchDescription(
-        declared_arguments + [OpaqueFunction(function=launch_setup)]
-    )
+    return LaunchDescription(declared_arguments + [OpaqueFunction(function=launch_setup)])

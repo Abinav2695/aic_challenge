@@ -18,21 +18,21 @@
 
 import sys
 import time
-import rclpy
-import numpy as np
-from rclpy.executors import ExternalShutdownException
 
-from rclpy.node import Node
+import numpy as np
+import rclpy
 from aic_control_interfaces.msg import (
-    MotionUpdate,
     JointMotionUpdate,
-    TrajectoryGenerationMode,
+    MotionUpdate,
     TargetMode,
+    TrajectoryGenerationMode,
 )
 from aic_control_interfaces.srv import (
     ChangeTargetMode,
 )
-from geometry_msgs.msg import Pose, Point, Quaternion, Wrench, Vector3, Twist
+from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3, Wrench
+from rclpy.executors import ExternalShutdownException
+from rclpy.node import Node
 
 
 class TestImpedanceNode(Node):
@@ -124,12 +124,10 @@ class TestImpedanceNode(Node):
     def send_cartesian_pose_target(self, pos, quat, frame_id):
 
         self.motion_update_publisher.publish(
-            self.generate_motion_update(
-                pos, quat, frame_id, TrajectoryGenerationMode.MODE_POSITION
-            )
+            self.generate_motion_update(pos, quat, frame_id, TrajectoryGenerationMode.MODE_POSITION)
         )
         self.get_logger().info(
-            f"Published MotionUpdate with POSITION trajectory mode to aic_controller"
+            "Published MotionUpdate with POSITION trajectory mode to aic_controller"
         )
 
     def send_cartesian_twist_target(self, twist, frame_id):
@@ -140,14 +138,12 @@ class TestImpedanceNode(Node):
             )
         )
         self.get_logger().info(
-            f"Published MotionUpdate with VELOCITY trajectory mode to aic_controller"
+            "Published MotionUpdate with VELOCITY trajectory mode to aic_controller"
         )
 
     def send_joint_target(self, joint_pos):
 
-        self.joint_motion_update_publisher.publish(
-            self.generate_joint_motion_update(joint_pos)
-        )
+        self.joint_motion_update_publisher.publish(self.generate_joint_motion_update(joint_pos))
 
         self.get_logger().info("Published JointMotionUpdate to aic_controller")
 

@@ -37,15 +37,9 @@ def contact_net_forces(
     body_ids = sensor_cfg.body_ids
     if body_ids is None or body_ids == slice(None):
         if getattr(sensor_cfg, "body_names", None) is not None:
-            names = (
-                [sensor_cfg.body_names]
-                if isinstance(sensor_cfg.body_names, str)
-                else sensor_cfg.body_names
-            )
+            names = [sensor_cfg.body_names] if isinstance(sensor_cfg.body_names, str) else sensor_cfg.body_names
             pattern = re.compile(names[0] if len(names) == 1 else "|".join(names))
-            body_ids = [
-                i for i, b in enumerate(contact_sensor.body_names) if pattern.search(b)
-            ]
+            body_ids = [i for i, b in enumerate(contact_sensor.body_names) if pattern.search(b)]
             if body_ids:
                 net = net[:, body_ids, :]
     else:

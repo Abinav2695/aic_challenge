@@ -4,8 +4,9 @@ import math
 import random
 from typing import TYPE_CHECKING
 
-import omni.usd
 import torch
+
+import omni.usd
 from pxr import Gf, UsdLux
 
 import isaaclab.utils.math as math_utils
@@ -21,10 +22,7 @@ def sample_object_poses(
     pose_range: dict[str, tuple[float, float]] = {},
     max_sample_tries: int = 5000,
 ):
-    range_list = [
-        pose_range.get(key, (0.0, 0.0))
-        for key in ["x", "y", "z", "roll", "pitch", "yaw"]
-    ]
+    range_list = [pose_range.get(key, (0.0, 0.0)) for key in ["x", "y", "z", "roll", "pitch", "yaw"]]
     pose_list = []
 
     for i in range(num_objects):
@@ -37,9 +35,7 @@ def sample_object_poses(
                 break
 
             # Check if pose of object is sufficiently far away from all other objects
-            separation_check = [
-                math.dist(sample[:3], pose[:3]) > min_separation for pose in pose_list
-            ]
+            separation_check = [math.dist(sample[:3], pose[:3]) > min_separation for pose in pose_list]
             if False not in separation_check:
                 pose_list.append(sample)
                 break
@@ -75,9 +71,7 @@ def randomize_object_pose(
             # Write pose to simulation
             pose_tensor = torch.tensor([pose_list[i]], device=env.device)
             positions = pose_tensor[:, 0:3] + env.scene.env_origins[cur_env, 0:3]
-            orientations = math_utils.quat_from_euler_xyz(
-                pose_tensor[:, 3], pose_tensor[:, 4], pose_tensor[:, 5]
-            )
+            orientations = math_utils.quat_from_euler_xyz(pose_tensor[:, 3], pose_tensor[:, 4], pose_tensor[:, 5])
             asset.write_root_pose_to_sim(
                 torch.cat([positions, orientations], dim=-1),
                 env_ids=torch.tensor([cur_env], device=env.device),
@@ -99,9 +93,7 @@ def randomize_xform_position(
 
     range_list = [pose_range.get(key, (0.0, 0.0)) for key in ["x", "y", "z"]]
     ranges = torch.tensor(range_list, device=env.device)
-    rand_offsets = math_utils.sample_uniform(
-        ranges[:, 0], ranges[:, 1], (len(env_ids), 3), device=env.device
-    )
+    rand_offsets = math_utils.sample_uniform(ranges[:, 0], ranges[:, 1], (len(env_ids), 3), device=env.device)
 
     default = torch.tensor(default_pos, device=env.device).unsqueeze(0)
     positions = default + env.scene.env_origins[env_ids] + rand_offsets
@@ -198,9 +190,7 @@ def randomize_board_and_parts(
     board_world_pos = board_pos + env_origins
     board_pose = torch.cat([board_world_pos, board_rot], dim=-1)
     board_asset.write_root_pose_to_sim(board_pose, env_ids=env_ids)
-    board_asset.write_root_velocity_to_sim(
-        torch.zeros(n, 6, device=device), env_ids=env_ids
-    )
+    board_asset.write_root_velocity_to_sim(torch.zeros(n, 6, device=device), env_ids=env_ids)
 
     for part_cfg in parts:
         pname = part_cfg["scene_name"]
@@ -221,6 +211,4 @@ def randomize_board_and_parts(
 
         part_pose = torch.cat([part_pos, part_rot], dim=-1)
         part_asset.write_root_pose_to_sim(part_pose, env_ids=env_ids)
-        part_asset.write_root_velocity_to_sim(
-            torch.zeros(n, 6, device=device), env_ids=env_ids
-        )
+        part_asset.write_root_velocity_to_sim(torch.zeros(n, 6, device=device), env_ids=env_ids)
