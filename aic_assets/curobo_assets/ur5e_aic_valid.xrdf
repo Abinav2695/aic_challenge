@@ -1,0 +1,151 @@
+format: "xrdf"
+
+format_version: 1.0
+
+default_joint_positions: 
+  shoulder_pan_joint: -0.0
+  shoulder_lift_joint: -0.0003
+  elbow_joint: -0.0
+  wrist_1_joint: -1e-04
+  wrist_2_joint: -0.0
+  wrist_3_joint: -0.0
+  gripper_left_finger_joint: 0.0
+  gripper_right_finger_joint: 0.0
+
+cspace: 
+  joint_names: 
+    - "shoulder_pan_joint"
+    - "shoulder_lift_joint"
+    - "elbow_joint"
+    - "wrist_1_joint"
+    - "wrist_2_joint"
+    - "wrist_3_joint"
+  acceleration_limits: [10, 10, 10, 10, 10, 10]
+  jerk_limits: [10000, 10000, 10000, 10000, 10000, 10000]
+
+collision: 
+  geometry: "auto_generated_collision_sphere_group"
+  
+tool_frames:
+  - name: "gripper_tcp"
+    parent_frame: "gripper_tcp"
+    fixed_transform: [0, 0, 0, 1, 0, 0, 0]
+
+
+self_collision:
+  geometry: "auto_generated_collision_sphere_group"
+  ignore:
+    world:
+      - "base_link_inertia"
+    base_link_inertia:
+      - "shoulder_link"
+    shoulder_link:
+      - "upper_arm_link"
+    upper_arm_link:
+      - "forearm_link"
+    forearm_link:
+      - "wrist_1_link"
+    wrist_1_link:
+      - "wrist_2_link"
+    wrist_2_link:
+      - "wrist_3_link"
+      - "ati_base_link"
+      - "ati_tool_link"
+      - "gripper_hande_base_link"
+    wrist_3_link:
+      - "ati_base_link"
+      - "ati_tool_link"
+      - "gripper_hande_base_link"
+    ati_base_link:
+      - "ati_tool_link"
+      - "gripper_hande_base_link"
+    ati_tool_link:
+      - "gripper_hande_base_link"
+      - "gripper_hande_finger_link_l"
+      - "gripper_hande_finger_link_r"
+    gripper_hande_base_link:
+      - "gripper_hande_finger_link_l"
+      - "gripper_hande_finger_link_r"
+    gripper_hande_finger_link_l:
+      - "gripper_hande_finger_link_r"
+
+geometry: 
+  auto_generated_collision_sphere_group: 
+    spheres: 
+      upper_arm_link: 
+        - center: [-0.183, 0.0, 0.15]
+          radius: 0.0795
+        - center: [-0.344, 0.0, 0.126]
+          radius: 0.0789
+        - center: [-0.03, 0.0, 0.146]
+          radius: 0.0789
+        - center: [-0.425, 0.0, 0.142]
+          radius: 0.0789
+        - center: [-0.27, -0.001, 0.151]
+          radius: 0.0789
+        - center: [-0.11, 0.0, 0.137]
+          radius: 0.0789
+        - center: [0.001, -0.0, 0.135]
+          radius: 0.0784
+      shoulder_link: 
+        - center: [-0.001, 0.001, 0.004]
+          radius: 0.0786
+        - center: [-0.001, -0.016, -0.006]
+          radius: 0.0778
+        - center: [0.009, -0.024, 0.017]
+          radius: 0.0699
+      forearm_link: 
+        - center: [-0.042, 0.003, 0.018]
+          radius: 0.0686
+        - center: [-0.225, -0.0, 0.013]
+          radius: 0.0671
+        - center: [-0.155, -0.002, 0.013]
+          radius: 0.0671
+        - center: [-0.385, -0.003, -0.004]
+          radius: 0.0626
+        - center: [-0.386, -0.0, 0.021]
+          radius: 0.0586
+        - center: [0.004, 0.008, 0.055]
+          radius: 0.0621
+        - center: [-0.294, -0.0, 0.002]
+          radius: 0.0641
+        - center: [-0.122, -0.0, 0.005]
+          radius: 0.0676
+      wrist_1_link: 
+        - center: [-0.0, -0.009, -0.007]
+          radius: 0.0583
+        - center: [0.0, 0.014, -0.033]
+          radius: 0.0583
+        - center: [-0.001, 0.016, -0.0]
+          radius: 0.0576
+        - center: [-0.0, -0.012, -0.034]
+          radius: 0.0576
+      wrist_2_link: 
+        - center: [-0.0, -0.013, 0.0]
+          radius: 0.0586
+        - center: [0.007, 0.06, 0.001]
+          radius: 0.0574
+        - center: [-0.001, -0.019, -0.008]
+          radius: 0.058
+        - center: [0.003, 0.123, 0.004]
+          radius: 0.0494
+      ati_base_link: 
+        - center: [-0.004, -0.011, -0.013]
+          radius: 0.0326
+      gripper_hande_base_link: 
+        - center: [0.0, -0.004, 0.056]
+          radius: 0.0438
+        - center: [-0.001, 0.011, 0.047]
+          radius: 0.0398
+        - center: [-0.015, 0.018, 0.037]
+          radius: 0.0317
+        - center: [0.009, 0.018, 0.065]
+          radius: 0.031
+      gripper_hande_finger_link_l: 
+        - center: [-0.006, 0.014, 0.111]
+          radius: 0.0242
+      gripper_hande_finger_link_r: 
+        - center: [0.002, -0.008, 0.11]
+          radius: 0.0242
+      
+      

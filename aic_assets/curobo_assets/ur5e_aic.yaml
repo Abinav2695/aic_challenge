@@ -1,0 +1,161 @@
+# The robot description defines the generalized coordinates and how to map those
+# to the underlying URDF dofs.
+
+api_version: 1.0
+
+# Defines the generalized coordinates. Each generalized coordinate is assumed
+# to have an entry in the URDF.
+# Lula will only use these joints to control the robot position.
+cspace:
+    - shoulder_pan_joint
+    - shoulder_lift_joint
+    - elbow_joint
+    - wrist_1_joint
+    - wrist_2_joint
+    - wrist_3_joint
+default_q: [
+    -0.0,-0.0003,-0.0,-1e-04,-0.0,-0.0
+]
+
+acceleration_limits: [
+   10,10,10,10,10,10
+]
+
+jerk_limits: [
+   10000,10000,10000,10000,10000,10000
+]
+
+# Most dimensions of the cspace have a direct corresponding element
+# in the URDF. This list of rules defines how unspecified coordinates
+# should be extracted or how values in the URDF should be overwritten.
+
+cspace_to_urdf_rules:
+    - {name: gripper_left_finger_joint, rule: fixed, value: 0.0}
+    - {name: gripper_right_finger_joint, rule: fixed, value: 0.0}
+
+# Lula uses collision spheres to define the robot geometry in order to avoid
+# collisions with external obstacles.  If no spheres are specified, Lula will
+# not be able to avoid obstacles.
+
+collision_spheres:
+  - upper_arm_link:
+    - "center": [-0.183, 0.0, 0.15]
+      "radius": 0.0795
+    - "center": [-0.344, 0.0, 0.126]
+      "radius": 0.07894
+    - "center": [-0.03, 0.0, 0.146]
+      "radius": 0.07894
+    - "center": [-0.425, 0.0, 0.142]
+      "radius": 0.07894
+    - "center": [-0.27, -0.001, 0.151]
+      "radius": 0.07894
+    - "center": [-0.11, 0.0, 0.137]
+      "radius": 0.07894
+    - "center": [0.001, -0.0, 0.135]
+      "radius": 0.07837
+  - shoulder_link:
+    - "center": [-0.001, 0.001, 0.004]
+      "radius": 0.07864
+    - "center": [-0.001, -0.016, -0.006]
+      "radius": 0.07777
+    - "center": [0.009, -0.024, 0.017]
+      "radius": 0.06991
+  - forearm_link:
+    - "center": [-0.042, 0.003, 0.018]
+      "radius": 0.06858
+    - "center": [-0.225, -0.0, 0.013]
+      "radius": 0.06707
+    - "center": [-0.155, -0.002, 0.013]
+      "radius": 0.06707
+    - "center": [-0.385, -0.003, -0.004]
+      "radius": 0.06257
+    - "center": [-0.386, -0.0, 0.021]
+      "radius": 0.05856
+    - "center": [0.004, 0.008, 0.055]
+      "radius": 0.06207
+    - "center": [-0.294, -0.0, 0.002]
+      "radius": 0.06407
+    - "center": [-0.122, -0.0, 0.005]
+      "radius": 0.06757
+  - wrist_1_link:
+    - "center": [-0.0, -0.009, -0.007]
+      "radius": 0.05831
+    - "center": [0.0, 0.014, -0.033]
+      "radius": 0.05831
+    - "center": [-0.001, 0.016, -0.0]
+      "radius": 0.05763
+    - "center": [-0.0, -0.012, -0.034]
+      "radius": 0.05763
+  - wrist_2_link:
+    - "center": [-0.0, -0.013, 0.0]
+      "radius": 0.0586
+    - "center": [0.007, 0.06, 0.001]
+      "radius": 0.05736
+    - "center": [-0.001, -0.019, -0.008]
+      "radius": 0.05798
+    - "center": [0.003, 0.123, 0.004]
+      "radius": 0.04935
+  - cam_mount_cam_mount_link:
+    - "center": [0.008, -0.013, 0.013]
+      "radius": 0.0331
+    - "center": [-0.012, 0.005, 0.013]
+      "radius": 0.0331
+    - "center": [0.008, -0.013, 0.013]
+      "radius": 0.0331
+    - "center": [-0.012, 0.005, 0.013]
+      "radius": 0.0331
+    - "center": [0.017, 0.006, 0.015]
+      "radius": 0.03152
+    - "center": [-0.001, 0.017, 0.014]
+      "radius": 0.03258
+  - center_camera_camera_link:
+    - "center": [0.053, 0.009, 0.001]
+      "radius": 0.03197
+    - "center": [0.054, 0.047, 0.001]
+      "radius": 0.03119
+    - "center": [0.048, -0.008, 0.004]
+      "radius": 0.02727
+    - "center": [0.055, 0.047, -0.003]
+      "radius": 0.03119
+    - "center": [0.058, 0.004, -0.005]
+      "radius": 0.02962
+    - "center": [0.053, 0.009, 0.001]
+      "radius": 0.03197
+    - "center": [0.054, 0.047, 0.001]
+      "radius": 0.03119
+  - ati_base_link:
+    - "center": [-0.004, -0.011, -0.013]
+      "radius": 0.03255
+  - gripper_hande_base_link:
+    - "center": [0.0, -0.004, 0.056]
+      "radius": 0.04378
+    - "center": [-0.001, 0.011, 0.047]
+      "radius": 0.03976
+    - "center": [-0.015, 0.018, 0.037]
+      "radius": 0.03172
+    - "center": [0.009, 0.018, 0.065]
+      "radius": 0.03105
+  - gripper_hande_finger_link_l:
+    - "center": [-0.006, 0.014, 0.111]
+      "radius": 0.02416
+  - gripper_hande_finger_link_r:
+    - "center": [0.002, -0.008, 0.11]
+      "radius": 0.02416
+  - left_camera_camera_link:
+    - "center": [0.053, 0.009, 0.001]
+      "radius": 0.03197
+    - "center": [0.054, 0.047, 0.001]
+      "radius": 0.03119
+    - "center": [0.048, -0.008, 0.004]
+      "radius": 0.02727
+    - "center": [0.055, 0.047, -0.003]
+      "radius": 0.03119
+  - right_camera_camera_link:
+    - "center": [0.053, 0.009, 0.001]
+      "radius": 0.03197
+    - "center": [0.054, 0.047, 0.001]
+      "radius": 0.03119
+    - "center": [0.048, -0.008, 0.004]
+      "radius": 0.02727
+    - "center": [0.055, 0.047, -0.003]
+      "radius": 0.03119
