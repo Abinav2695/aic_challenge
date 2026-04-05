@@ -12,13 +12,15 @@ from aic_model.policy import (
 from aic_control_interfaces.msg import (
     JointMotionUpdate,
     TrajectoryGenerationMode,
+    MotionUpdate,
 )
-
+from geometry_msgs.msg import Point, Pose, Quaternion, Vector3, Wrench
+from std_msgs.msg import Header
 from aic_task_interfaces.msg import Task
 from rclpy.duration import Duration
 from rclpy.time import Time
 from tf2_ros import TransformException
-from transforms3d._gohlketransforms import quaternion_multiply
+from transforms3d._gohlketransforms import quaternion_multiply, quaternion_slerp
 from transforms3d.quaternions import quat2mat, mat2quat
 
 # cuRobo
@@ -29,12 +31,15 @@ from curobo.util.xrdf_utils import convert_xrdf_to_curobo
 from curobo.util_file import load_yaml
 from curobo.wrap.reacher.motion_gen import MotionGen, MotionGenConfig, MotionGenPlanConfig
 from geometry_msgs.msg import Point, Pose, Quaternion
+from std_srvs.srv import Trigger
+
+
 
 XRDF_PATH = os.path.expanduser(
-    "~/ws_aic/src/aic_challenge/aic_assets/curobo_assets/ur5e_aic_valid.xrdf"
+    "~/ws_aic/src/aic/aic_assets/curobo_assets/ur5e_aic_valid.xrdf"
 )
 URDF_PATH = os.path.expanduser(
-    "~/ws_aic/src/aic_challenge/aic_assets/curobo_assets/ur5e_curobo_dummy.urdf"
+    "~/ws_aic/src/aic/aic_assets/curobo_assets/ur5e_curobo_dummy.urdf"
 )
 
 JOINT_NAMES = [
@@ -46,10 +51,28 @@ JOINT_NAMES = [
     "wrist_3_joint",
 ]
 
+PROFILE_APPROACH_JOINTSPACE = {
+    "stiffness": [100.0, 100.0, 100.0,  50.0,  50.0,  50.0],
+    "damping":   [ 40.0,  40.0,  40.0,  10.0,  10.0,  10.0],
+}
+
+# PROFILE_COMPLIANT = {
+#     "stiffness": [100.0, 100.0, 100.0, 50.0, 50.0, 50.0],
+#     "damping":   [40.0, 40.0, 40.0, 15.0, 15.0, 15.0],
+# }
+
+# PROFILE_INSERTION = {
+#     "stiffness": [200.0, 200.0, 200.0, 80.0, 80.0, 80.0],
+#     "damping":   [80.0,  80.0,  80.0,  40.0, 40.0, 40.0],
+# }
+
 
 class CheatCodeCurobo(Policy):
 
     def __init__(self, parent_node):
+        self._tip_x_error_integrator = 0.0
+        self._tip_y_error_integrator = 0.0
+        self._max_integrator_windup = 0.05
         self._task = None
         self._mg = None
         super().__init__(parent_node)
@@ -74,7 +97,7 @@ class CheatCodeCurobo(Policy):
 
         self.get_logger().info("CuRobo: building MotionGen config...")
         mg_config = MotionGenConfig.load_from_robot_config(
-            robot_cfg, interpolation_dt=0.01,
+            robot_cfg, interpolation_dt=0.001,
         )
 
         self._mg = MotionGen(mg_config)
@@ -107,6 +130,57 @@ class CheatCodeCurobo(Policy):
         self.get_logger().error(f"Transform '{source_frame}' not available after {timeout_sec}s")
         return False
 
+    def _tare_ft_sensor(self):
+        """Calls the tare service to zero the Force/Torque sensor."""
+        self.get_logger().info("Taring Force/Torque sensor...")
+        
+        # Create the service client using the parent node
+        client = self._parent_node.create_client(Trigger, '/aic_controller/tare_force_torque_sensor')
+        
+        # Wait up to 3 seconds for the service to be available
+        if not client.wait_for_service(timeout_sec=3.0):
+            self.get_logger().error("Tare FT sensor service not available!")
+            return False
+
+        # Make the request
+        req = Trigger.Request()
+        future = client.call_async(req)
+
+        # Safely wait for the response using your existing sleep loop
+        while not future.done():
+            self.sleep_for(0.05)
+
+        # Check the result
+        response = future.result()
+        if response.success:
+            self.get_logger().info(f"Sensor tared successfully: {response.message}")
+            # Give it a tiny fraction of a second to settle
+            self.sleep_for(0.2) 
+            return True
+        else:
+            self.get_logger().error(f"Failed to tare sensor: {response.message}")
+            return False
+
+
+    def send_joint_target(self, move_robot, positions, profile=None):
+        """Send a single joint-space target."""
+        if profile is None:
+            profile = PROFILE_APPROACH_JOINTSPACE
+
+        cmd = JointMotionUpdate(
+            target_stiffness=profile["stiffness"],
+            target_damping=profile["damping"],
+            target_feedforward_torque=[0.0] * 6,
+            trajectory_generation_mode=TrajectoryGenerationMode(
+                mode=TrajectoryGenerationMode.MODE_POSITION
+            ),
+        )
+        cmd.target_state.positions = (
+            positions.tolist() if hasattr(positions, 'tolist') else list(positions)
+        )
+        move_robot(joint_motion_update=cmd)
+
+
 
 
 
@@ -120,6 +194,8 @@ class CheatCodeCurobo(Policy):
 
         self.get_logger().info(f"CheatCode.insert_cable() task: {task}")
         self._task = task
+
+        self._tare_ft_sensor()
 
         port_frame = f"task_board/{task.target_module_name}/{task.port_name}_link"
         cable_tip_frame = f"{task.cable_name}/{task.plug_name}_link"
@@ -152,11 +228,14 @@ class CheatCodeCurobo(Policy):
             send_feedback("Planning failed")
             return False
 
-        self.execute_trajectory(waypoints, move_robot, interpolation_dt=0.01)
+        self.execute_waypoint(waypoints, move_robot, get_observation)
         self.sleep_for(1.0)  # let the robot settle at the approach pose
 
-        # Phase 2: correct cable flex error
-        self.correct_approach(port_frame, cable_tip_frame, move_robot, timeout=3.0)
+        # # Phase 2: correct cable flex error
+        # self.correct_approach(port_frame, cable_tip_frame, move_robot, timeout=3.0)
+
+        # self.descend_and_insert(port_frame, cable_tip_frame,
+        #                get_observation, move_robot, timeout=30.0)
 
         try:
             plug_final = self._parent_node._tf_buffer.lookup_transform(
@@ -189,15 +268,7 @@ class CheatCodeCurobo(Policy):
 
 
 
-    def _tf_to_matrix(self, tf_msg):
-        """Convert a TransformStamped to a 4x4 homogeneous matrix."""
-        t = tf_msg.transform.translation
-        q = tf_msg.transform.rotation
-        R = quat2mat([q.w, q.x, q.y, q.z])
-        T = np.eye(4)
-        T[:3, :3] = R
-        T[:3, 3] = [t.x, t.y, t.z]
-        return T
+    
 
     def compute_approach_pose(self, port_frame, cable_tip_frame, z_above):
         """
@@ -222,34 +293,64 @@ class CheatCodeCurobo(Policy):
         gripper_tf = self._parent_node._tf_buffer.lookup_transform(
             "base_link", "gripper/tcp", Time(),
         )
+        ############ Math ###################
+        # to find port orientation 
+        # q_diff * q_plug = q_port
+        # q_diff = q_port * q_plug_inv
+        # q_gripper = q_diff * q_gripper 
+        # gives correct orientation for gripper wrt to port  
 
-        # Convert to 4x4 matrices
-        T_base_plug = self._tf_to_matrix(cable_tip_tf)
-        T_base_gripper = self._tf_to_matrix(gripper_tf)
-        T_base_port = self._tf_to_matrix(port_tf)
+    
+        q_port = [
+            port_tf.transform.rotation.w,
+            port_tf.transform.rotation.x,
+            port_tf.transform.rotation.y,
+            port_tf.transform.rotation.z,
+        ]
 
-        # Step 1: Find constant offset from gripper to plug (in gripper's local frame)
-        # T_base_plug = T_base_gripper @ T_gripper_plug
-        # T_gripper_plug = inv(T_base_gripper) @ T_base_plug
-        T_gripper_plug = np.linalg.inv(T_base_gripper) @ T_base_plug
+        q_plug =  [
+            cable_tip_tf.transform.rotation.w,
+            cable_tip_tf.transform.rotation.x,
+            cable_tip_tf.transform.rotation.y,
+            cable_tip_tf.transform.rotation.z,
+        ]
 
-        # Step 2: Define where we want the plug to be (at port, but z_above higher)
-        T_base_plug_target = np.copy(T_base_port)
-        T_base_plug_target[2, 3] += z_above  # raise in world Z
+        q_plug_inv = [
+            -q_plug[0],
+            q_plug[1],
+            q_plug[2],
+            q_plug[3],
+        ]
 
-        # Step 3: Compute where gripper must be so plug lands at target
-        # T_base_plug_target = T_base_gripper_target @ T_gripper_plug
-        # T_base_gripper_target = T_base_plug_target @ inv(T_gripper_plug)
-        T_base_gripper_target = T_base_plug_target @ np.linalg.inv(T_gripper_plug)
+        q_diff = quaternion_multiply(q_port, q_plug_inv)
 
-        # Step 4: Extract position and quaternion
-        gripper_target_pos = [float(x) for x in T_base_gripper_target[:3, 3]]
-        gripper_target_quat = [float(q) for q in mat2quat(T_base_gripper_target[:3, :3])]
+        q_gripper = [
+            gripper_tf.transform.rotation.w,
+            gripper_tf.transform.rotation.x,
+            gripper_tf.transform.rotation.y,
+            gripper_tf.transform.rotation.z,
+        ]
 
-        self.get_logger().info(f"Target pos: {gripper_target_pos}")
-        self.get_logger().info(f"Target quat: {gripper_target_quat}")
+        gripper_target_quat = quaternion_multiply(q_diff, q_gripper)
 
-        return gripper_target_pos, gripper_target_quat
+        port_xyz = [
+            port_tf.transform.translation.x,
+            port_tf.transform.translation.y,
+            port_tf.transform.translation.z,
+        ]
+
+        gripper_z = gripper_tf.transform.translation.z
+        plug_z = cable_tip_tf.transform.translation.z
+
+        plug_length = abs(gripper_z-plug_z)
+
+        gripper_target_xyz = [
+            port_xyz[0],
+            port_xyz[1],
+            port_xyz[2] + z_above + plug_length
+        ]
+
+        return gripper_target_xyz, gripper_target_quat
 
 
 
@@ -284,33 +385,50 @@ class CheatCodeCurobo(Policy):
 
         traj=result.get_interpolated_plan()
             
-        waypoints = traj.position.cpu().numpy()
+        waypoints = traj.position.squeeze(0).cpu().numpy()
 
         return True, waypoints
 
-    def execute_trajectory(self, waypoints, move_robot, interpolation_dt):
-        """
-        Executes trajectory and provide waypoints from curobo to aic_controller
+    # def execute_trajectory(self, waypoints, move_robot, interpolation_dt=0.02):
+    #     """
+    #     Executes trajectory and provide waypoints from curobo to aic_controller
 
-        Args:
-            waypoints: np.ndarray of joint configuration for path waypoint
-            move_robot: MoveRobotCallback
-            interpolation_dt: interpolation_dt of waypoints
+    #     Args:
+    #         waypoints: np.ndarray of joint configuration for path waypoint
+    #         move_robot: MoveRobotCallback
+    #         interpolation_dt: interpolation_dt of waypoints
 
-        Returns: None
-        """
-        joint_cmd = JointMotionUpdate(
-            target_stiffness = [90.0, 90.0, 90.0, 90.0, 90.0, 90.0],
-            target_damping   = [30.0, 30.0, 30.0, 30.0, 30.0, 30.0],
-            target_feedforward_torque = [0.0]*6,
-            trajectory_generation_mode = TrajectoryGenerationMode(
-                    mode=TrajectoryGenerationMode.MODE_POSITION),
+    #     Returns: None
+    #     """
+    #     joint_cmd = JointMotionUpdate(
+    #         # target_stiffness = [90.0, 90.0, 90.0, 90.0, 90.0, 90.0],
+    #         # target_damping   = [30.0, 30.0, 30.0, 30.0, 30.0, 30.0],
+    #         target_stiffness=[300.0, 300.0, 300.0, 100.0, 100.0, 100.0],
+    #         target_damping=  [120.0, 120.0, 120.0, 50.0,  50.0,  50.0],
+    #         target_feedforward_torque = [0.0]*6,
+    #         trajectory_generation_mode = TrajectoryGenerationMode(
+    #                 mode=TrajectoryGenerationMode.MODE_POSITION),
+    #         )
+
+    #     for wp in waypoints:
+    #         joint_cmd.target_state.positions = wp.tolist()
+    #         move_robot(joint_motion_update=joint_cmd)
+    #         self.sleep_for(interpolation_dt)
+
+    def execute_waypoint(self, waypoints, move_robot, get_observation, dt=0.001, profile=None):
+        """Execute a full joint-space trajectory."""
+        for wp in waypoints:
+            self.send_joint_target(move_robot, wp, profile=profile)
+
+            obs = get_observation()
+            w = obs.wrist_wrench.wrench
+            self.get_logger().info(
+                # f"WP {i}/{len(waypoints)} | "
+                f"F: x={w.force.x:.3f} y={w.force.y:.3f} z={w.force.z:.3f} | "
+                f"T: x={w.torque.x:.3f} y={w.torque.y:.3f} z={w.torque.z:.3f}"
             )
 
-        for wp in waypoints:
-            joint_cmd.target_state.positions = wp.tolist()
-            move_robot(joint_motion_update=joint_cmd)
-            self.sleep_for(interpolation_dt)
+            self.sleep_for(dt)
 
 
         
@@ -415,6 +533,259 @@ class CheatCodeCurobo(Policy):
             self.get_logger().info(f"After correction: dx={dx:.4f}m dy={dy:.4f}m")
         except TransformException:
             pass
-        
+
+
+    # def descend_and_insert(self, port_frame, cable_tip_frame,
+    #                    get_observation, move_robot, timeout=30.0):
+    #     """
+    #     Force-aware descent using controller's built-in impedance.
+    #     Uses feedforward wrench for gentle push, anisotropic stiffness
+    #     for compliant insertion, and wrench_feedback_gains for self-centering.
+    #     """
+    #     start = self.time_now()
+    #     timeout_dur = Duration(seconds=timeout)
+    #     z_offset = 0.05
+
+    #     # Get port transform once for orientation reference
+    #     try:
+    #         port_tf = self._parent_node._tf_buffer.lookup_transform(
+    #             "base_link", port_frame, Time(),
+    #         )
+    #     except TransformException:
+    #         self.get_logger().error("Cannot look up port frame for descent")
+    #         return
+
+    #     # Port's insertion direction in base_link frame
+    #     # Port z-axis points along insertion direction
+    #     R_port = quat2mat([
+    #         port_tf.transform.rotation.w,
+    #         port_tf.transform.rotation.x,
+    #         port_tf.transform.rotation.y,
+    #         port_tf.transform.rotation.z,
+    #     ])
+    #     insertion_dir = R_port[:, 2]  # port's local z in world frame
+
+    #     while (self.time_now() - start) < timeout_dur:
+    #         if z_offset < -0.015:
+    #             break
+
+    #         try:
+    #             plug_tf = self._parent_node._tf_buffer.lookup_transform(
+    #                 "base_link", cable_tip_frame, Time(),
+    #             )
+    #             port_tf = self._parent_node._tf_buffer.lookup_transform(
+    #                 "base_link", port_frame, Time(),
+    #             )
+    #             gripper_tf = self._parent_node._tf_buffer.lookup_transform(
+    #                 "base_link", "gripper/tcp", Time(),
+    #             )
+    #         except TransformException:
+    #             self.sleep_for(0.05)
+    #             continue
+
+    #         # x,y correction from TF
+    #         dx = port_tf.transform.translation.x - plug_tf.transform.translation.x
+    #         dy = port_tf.transform.translation.y - plug_tf.transform.translation.y
+
+    #         # Read force from observation
+    #         obs = get_observation()
+    #         fz = abs(obs.wrist_wrench.wrench.force.z) if obs else 0.0
+    #         fx = abs(obs.wrist_wrench.wrench.force.x) if obs else 0.0
+    #         fy = abs(obs.wrist_wrench.wrench.force.y) if obs else 0.0
+    #         total_force = (fx**2 + fy**2 + fz**2) ** 0.5
+
+    #         # Adaptive descent speed based on force
+    #         if total_force > 15.0:
+    #             descent_step = 0.0001
+    #             self.get_logger().warn(f"High force: {total_force:.1f}N, pausing")
+    #         elif total_force > 5.0:
+    #             descent_step = 0.0001
+    #         else:
+    #             descent_step = 0.0005
+
+    #         z_offset -= descent_step
+
+    #         # Target position
+    #         plug_to_gripper_z = (
+    #             gripper_tf.transform.translation.z
+    #             - plug_tf.transform.translation.z
+    #         )
+    #         target_z = port_tf.transform.translation.z + z_offset - plug_to_gripper_z
+
+    #         # Gentle push along insertion direction (3N)
+    #         push_force = -3.0 * insertion_dir
+
+    #         motion_update = MotionUpdate(
+    #             header=Header(
+    #                 frame_id="base_link",
+    #                 stamp=self._parent_node.get_clock().now().to_msg(),
+    #             ),
+    #             pose=Pose(
+    #                 position=Point(
+    #                     x=gripper_tf.transform.translation.x + dx,
+    #                     y=gripper_tf.transform.translation.y + dy,
+    #                     z=target_z,
+    #                 ),
+    #                 orientation=Quaternion(
+    #                     w=gripper_tf.transform.rotation.w,
+    #                     x=gripper_tf.transform.rotation.x,
+    #                     y=gripper_tf.transform.rotation.y,
+    #                     z=gripper_tf.transform.rotation.z,
+    #                 ),
+    #             ),
+    #             # Stiff x,y (centering), soft z (compliant insertion)
+    #             target_stiffness=np.diag(
+    #                 [90.0, 90.0, 20.0, 50.0, 50.0, 50.0]
+    #             ).flatten(),
+    #             target_damping=np.diag(
+    #                 [50.0, 50.0, 15.0, 20.0, 20.0, 20.0]
+    #             ).flatten(),
+    #             # Push along port's insertion axis
+    #             feedforward_wrench_at_tip=Wrench(
+    #                 force=Vector3(
+    #                     x=float(push_force[0]),
+    #                     y=float(push_force[1]),
+    #                     z=float(push_force[2]),
+    #                 ),
+    #                 torque=Vector3(x=0.0, y=0.0, z=0.0),
+    #             ),
+    #             # Admittance: lateral force → self-centering at 500Hz
+    #             wrench_feedback_gains_at_tip=[0.5, 0.5, 0.5, 0.0, 0.0, 0.0],
+    #             trajectory_generation_mode=TrajectoryGenerationMode(
+    #                 mode=TrajectoryGenerationMode.MODE_POSITION,
+    #             ),
+    #         )
+
+    #         move_robot(motion_update=motion_update)
+    #         self.sleep_for(0.05)
+
+    #     self.get_logger().info("Descent complete. Stabilizing...")
+    #     self.sleep_for(5.0)
+    def descend_and_insert(self, port_frame, cable_tip_frame,
+                       get_observation, move_robot, timeout=30.0):
+        """
+        Force-aware descent with X/Y PI Integration to fight cable flex.
+        Uses 'relieve and center' strategy if it catches the edge.
+        """
+        start = self.time_now()
+        timeout_dur = Duration(seconds=timeout)
+        z_offset = 0.05
+
+        # PI Controller state to fight cable flex
+        ix = 0.0
+        iy = 0.0
+        i_gain = 0.15 
+        max_windup = 0.05 
+
+        try:
+            port_tf = self._parent_node._tf_buffer.lookup_transform(
+                "base_link", port_frame, Time(),
+            )
+        except TransformException:
+            self.get_logger().error("Cannot look up port frame for descent")
+            return
+
+        # Insertion direction (pushing IN, so negative Z)
+        R_port = quat2mat([
+            port_tf.transform.rotation.w, port_tf.transform.rotation.x,
+            port_tf.transform.rotation.y, port_tf.transform.rotation.z,
+        ])
+        insertion_dir = R_port[:, 2]  
+        push_force = -3.0 * insertion_dir
+
+        while (self.time_now() - start) < timeout_dur:
+            if z_offset < -0.015:
+                break
+
+            try:
+                plug_tf = self._parent_node._tf_buffer.lookup_transform(
+                    "base_link", cable_tip_frame, Time(),
+                )
+                port_tf = self._parent_node._tf_buffer.lookup_transform(
+                    "base_link", port_frame, Time(),
+                )
+                gripper_tf = self._parent_node._tf_buffer.lookup_transform(
+                    "base_link", "gripper/tcp", Time(),
+                )
+            except TransformException:
+                self.sleep_for(0.05)
+                continue
+
+            # --- 1. X/Y INTEGRATOR (Fighting the flex) ---
+            dx = port_tf.transform.translation.x - plug_tf.transform.translation.x
+            dy = port_tf.transform.translation.y - plug_tf.transform.translation.y
+
+            # Accumulate error (windup clamp prevents runaway)
+            ix = max(-max_windup, min(max_windup, ix + dx))
+            iy = max(-max_windup, min(max_windup, iy + dy))
+
+            # Add PI correction to the gripper's current target
+            target_x = gripper_tf.transform.translation.x + dx + (i_gain * ix)
+            target_y = gripper_tf.transform.translation.y + dy + (i_gain * iy)
+
+
+            # --- 2. FORCE-ADAPTIVE DESCENT ---
+            obs = get_observation()
+            fz = abs(obs.wrist_wrench.wrench.force.z) if obs else 0.0
+            fx = abs(obs.wrist_wrench.wrench.force.x) if obs else 0.0
+            fy = abs(obs.wrist_wrench.wrench.force.y) if obs else 0.0
+            total_force = (fx**2 + fy**2 + fz**2) ** 0.5
+
+            if total_force > 15.0:
+                # DANGER: Jammed hard. Back up slightly to relieve friction!
+                descent_step = -0.0005 
+                self.get_logger().warn(f"Force {total_force:.1f}N! Backing up to recenter.")
+            elif total_force > 5.0:
+                # WARNING: Touching the edge. Stop Z-descent to let X/Y catch up.
+                descent_step = 0.0
+                self.get_logger().info(f"Force {total_force:.1f}N. Pausing Z descent.")
+            else:
+                # SAFE: Coast is clear, push down.
+                descent_step = 0.0005
+
+            z_offset -= descent_step
+
+            # Calculate Z target
+            plug_to_gripper_z = (
+                gripper_tf.transform.translation.z - plug_tf.transform.translation.z
+            )
+            target_z = port_tf.transform.translation.z + z_offset + plug_to_gripper_z
+
+
+            # --- 3. EXECUTE MOTION ---
+            motion_update = MotionUpdate(
+                header=Header(
+                    frame_id="base_link",
+                    stamp=self._parent_node.get_clock().now().to_msg(),
+                ),
+                pose=Pose(
+                    position=Point(x=target_x, y=target_y, z=target_z),
+                    orientation=Quaternion(
+                        w=gripper_tf.transform.rotation.w,
+                        x=gripper_tf.transform.rotation.x,
+                        y=gripper_tf.transform.rotation.y,
+                        z=gripper_tf.transform.rotation.z,
+                    ),
+                ),
+                target_stiffness=np.diag([90.0, 90.0, 20.0, 50.0, 50.0, 50.0]).flatten(),
+                target_damping=np.diag([50.0, 50.0, 15.0, 20.0, 20.0, 20.0]).flatten(),
+                feedforward_wrench_at_tip=Wrench(
+                    force=Vector3(
+                        x=float(push_force[0]), y=float(push_force[1]), z=float(push_force[2])
+                    ),
+                    torque=Vector3(x=0.0, y=0.0, z=0.0),
+                ),
+                wrench_feedback_gains_at_tip=[0.5, 0.5, 0.5, 0.0, 0.0, 0.0],
+                trajectory_generation_mode=TrajectoryGenerationMode(
+                    mode=TrajectoryGenerationMode.MODE_POSITION,
+                ),
+            )
+
+            move_robot(motion_update=motion_update)
+            self.sleep_for(0.05)
+
+        self.get_logger().info("Descent complete. Stabilizing...")
+        self.sleep_for(5.0)
+
 
         
