@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
+
 import torch
 import torch.nn as nn
+
 
 class BasePolicy(ABC, nn.Module):
     """
@@ -42,18 +44,19 @@ class BasePolicy(ABC, nn.Module):
         """
         ...
 
-    def get_optimizer_groups(self, lr: float, weight_decay: float,
-                             lr_backbone_mutliplier: float = 0.1) -> list[dict]:
+    def get_optimizer_groups(
+        self, lr: float, weight_decay: float, lr_backbone_mutliplier: float = 0.1
+    ) -> list[dict]:
         """
         Split parameters into two groups:
-        - Backbone (pretrained vision encoder) -> low learning rate 
+        - Backbone (pretrained vision encoder) -> low learning rate
         - Everything else -> normal learning rate
         """
         backbone_params = []
         other_params = []
 
-        # self.named_parameters() — this is a PyTorch nn.Module method that yields (name, parameter) pairs. 
-        # The name is like "rgb_encoder.backbone.layer1.conv1.weight". 
+        # self.named_parameters() — this is a PyTorch nn.Module method that yields (name, parameter) pairs.
+        # The name is like "rgb_encoder.backbone.layer1.conv1.weight".
         # We check if "rgb_encoder" or "backbone" appears in the name to decide which group it belongs to.
 
         for name, param in self.named_parameters():
@@ -63,14 +66,12 @@ class BasePolicy(ABC, nn.Module):
                 backbone_params.append(param)
             else:
                 other_params.append(param)
-        
+
         return [
             {"params": other_params, "lr": lr, "weight_decay": weight_decay},
-            {"params": backbone_params, "lr": lr * lr_backbone_multiplier,
-             "weight_decay": weight_decay},
+            {
+                "params": backbone_params,
+                "lr": lr * lr_backbone_multiplier,
+                "weight_decay": weight_decay,
+            },
         ]
-
-
-
-
-    

@@ -1,0 +1,492 @@
+{
+  "batch_id": "batch_002",
+  "generated_at": "2026-04-04T03:55:10.288081",
+  "num_trials": 25,
+  "plug_types_used": [
+    "sfp"
+  ],
+  "seed": 102,
+  "ranges": {
+    "board_x": [
+      0.157,
+      0.163
+    ],
+    "board_y": [
+      -0.188,
+      -0.182
+    ],
+    "board_z": 1.14,
+    "board_yaw": [
+      2.97,
+      3.03
+    ],
+    "nic_rail": {
+      "min": -0.031,
+      "max": 0.031
+    },
+    "sc_rail": {
+      "min": -0.0575,
+      "max": 0.0575
+    },
+    "mount_rail": {
+      "min": -0.09625,
+      "max": 0.09625
+    },
+    "sc_ports_per_sfp_trial": [
+      0,
+      2
+    ]
+  },
+  "trials": {
+    "trial_0": {
+      "trial_id": "trial_0",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_4",
+      "target_module": "nic_card_mount_4",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1593,
+        "y": -0.1843,
+        "z": 1.14,
+        "yaw": 3.004
+      },
+      "nic_translation": 0.0074,
+      "nic_yaw": 0.0068,
+      "num_nic_cards": 2,
+      "gripper_z": 0.04245
+    },
+    "trial_1": {
+      "trial_id": "trial_1",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_3",
+      "target_module": "nic_card_mount_3",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1611,
+        "y": -0.1849,
+        "z": 1.14,
+        "yaw": 3.0149
+      },
+      "nic_translation": -0.0043,
+      "nic_yaw": -0.0355,
+      "num_nic_cards": 1,
+      "gripper_z": 0.04245
+    },
+    "trial_2": {
+      "trial_id": "trial_2",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_4",
+      "target_module": "nic_card_mount_4",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1593,
+        "y": -0.1835,
+        "z": 1.14,
+        "yaw": 3.006
+      },
+      "nic_translation": 0.0021,
+      "nic_yaw": 0.1655,
+      "num_nic_cards": 2,
+      "gripper_z": 0.04245
+    },
+    "trial_3": {
+      "trial_id": "trial_3",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_3",
+      "target_module": "nic_card_mount_3",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1587,
+        "y": -0.1873,
+        "z": 1.14,
+        "yaw": 3.0166
+      },
+      "nic_translation": -0.0307,
+      "nic_yaw": -0.0791,
+      "num_nic_cards": 1,
+      "gripper_z": 0.04245
+    },
+    "trial_4": {
+      "trial_id": "trial_4",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_1",
+      "target_module": "nic_card_mount_1",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1586,
+        "y": -0.1824,
+        "z": 1.14,
+        "yaw": 3.0237
+      },
+      "nic_translation": 0.0133,
+      "nic_yaw": 0.0592,
+      "num_nic_cards": 1,
+      "gripper_z": 0.04245
+    },
+    "trial_5": {
+      "trial_id": "trial_5",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_4",
+      "target_module": "nic_card_mount_4",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1599,
+        "y": -0.1827,
+        "z": 1.14,
+        "yaw": 3.0273
+      },
+      "nic_translation": 0.0257,
+      "nic_yaw": -0.0162,
+      "num_nic_cards": 2,
+      "gripper_z": 0.04245
+    },
+    "trial_6": {
+      "trial_id": "trial_6",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_4",
+      "target_module": "nic_card_mount_4",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1598,
+        "y": -0.1864,
+        "z": 1.14,
+        "yaw": 3.0242
+      },
+      "nic_translation": 0.0285,
+      "nic_yaw": 0.0187,
+      "num_nic_cards": 2,
+      "gripper_z": 0.04245
+    },
+    "trial_7": {
+      "trial_id": "trial_7",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_2",
+      "target_module": "nic_card_mount_2",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1591,
+        "y": -0.1848,
+        "z": 1.14,
+        "yaw": 3.0133
+      },
+      "nic_translation": 0.006,
+      "nic_yaw": 0.0942,
+      "num_nic_cards": 1,
+      "gripper_z": 0.04245
+    },
+    "trial_8": {
+      "trial_id": "trial_8",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_2",
+      "target_module": "nic_card_mount_2",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1581,
+        "y": -0.1863,
+        "z": 1.14,
+        "yaw": 3.0274
+      },
+      "nic_translation": 0.0117,
+      "nic_yaw": 0.1452,
+      "num_nic_cards": 1,
+      "gripper_z": 0.04245
+    },
+    "trial_9": {
+      "trial_id": "trial_9",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_3",
+      "target_module": "nic_card_mount_3",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1606,
+        "y": -0.1856,
+        "z": 1.14,
+        "yaw": 3.0067
+      },
+      "nic_translation": 0.0063,
+      "nic_yaw": 0.0693,
+      "num_nic_cards": 1,
+      "gripper_z": 0.04245
+    },
+    "trial_10": {
+      "trial_id": "trial_10",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_2",
+      "target_module": "nic_card_mount_2",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1624,
+        "y": -0.1836,
+        "z": 1.14,
+        "yaw": 2.9877
+      },
+      "nic_translation": 0.0006,
+      "nic_yaw": 0.0472,
+      "num_nic_cards": 2,
+      "gripper_z": 0.04245
+    },
+    "trial_11": {
+      "trial_id": "trial_11",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_3",
+      "target_module": "nic_card_mount_3",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1621,
+        "y": -0.1827,
+        "z": 1.14,
+        "yaw": 3.0145
+      },
+      "nic_translation": 0.0027,
+      "nic_yaw": -0.0461,
+      "num_nic_cards": 2,
+      "gripper_z": 0.04245
+    },
+    "trial_12": {
+      "trial_id": "trial_12",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_3",
+      "target_module": "nic_card_mount_3",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.159,
+        "y": -0.1871,
+        "z": 1.14,
+        "yaw": 3.0198
+      },
+      "nic_translation": -0.0108,
+      "nic_yaw": 0.1324,
+      "num_nic_cards": 2,
+      "gripper_z": 0.04245
+    },
+    "trial_13": {
+      "trial_id": "trial_13",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_1",
+      "target_module": "nic_card_mount_1",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1613,
+        "y": -0.1838,
+        "z": 1.14,
+        "yaw": 2.981
+      },
+      "nic_translation": -0.01,
+      "nic_yaw": -0.1434,
+      "num_nic_cards": 1,
+      "gripper_z": 0.04245
+    },
+    "trial_14": {
+      "trial_id": "trial_14",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_2",
+      "target_module": "nic_card_mount_2",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1608,
+        "y": -0.1862,
+        "z": 1.14,
+        "yaw": 2.9981
+      },
+      "nic_translation": -0.0113,
+      "nic_yaw": -0.1264,
+      "num_nic_cards": 1,
+      "gripper_z": 0.04245
+    },
+    "trial_15": {
+      "trial_id": "trial_15",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_3",
+      "target_module": "nic_card_mount_3",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1577,
+        "y": -0.1833,
+        "z": 1.14,
+        "yaw": 3.0265
+      },
+      "nic_translation": 0.0045,
+      "nic_yaw": 0.1358,
+      "num_nic_cards": 2,
+      "gripper_z": 0.04245
+    },
+    "trial_16": {
+      "trial_id": "trial_16",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_3",
+      "target_module": "nic_card_mount_3",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1587,
+        "y": -0.186,
+        "z": 1.14,
+        "yaw": 2.9744
+      },
+      "nic_translation": -0.0215,
+      "nic_yaw": -0.0359,
+      "num_nic_cards": 2,
+      "gripper_z": 0.04245
+    },
+    "trial_17": {
+      "trial_id": "trial_17",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_1",
+      "target_module": "nic_card_mount_1",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1614,
+        "y": -0.1843,
+        "z": 1.14,
+        "yaw": 3.0096
+      },
+      "nic_translation": 0.0129,
+      "nic_yaw": 0.0758,
+      "num_nic_cards": 1,
+      "gripper_z": 0.04245
+    },
+    "trial_18": {
+      "trial_id": "trial_18",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_3",
+      "target_module": "nic_card_mount_3",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.158,
+        "y": -0.1854,
+        "z": 1.14,
+        "yaw": 2.9811
+      },
+      "nic_translation": -0.0073,
+      "nic_yaw": 0.0839,
+      "num_nic_cards": 1,
+      "gripper_z": 0.04245
+    },
+    "trial_19": {
+      "trial_id": "trial_19",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_3",
+      "target_module": "nic_card_mount_3",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1617,
+        "y": -0.1831,
+        "z": 1.14,
+        "yaw": 3.0215
+      },
+      "nic_translation": -0.0149,
+      "nic_yaw": -0.0545,
+      "num_nic_cards": 1,
+      "gripper_z": 0.04245
+    },
+    "trial_20": {
+      "trial_id": "trial_20",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_3",
+      "target_module": "nic_card_mount_3",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1577,
+        "y": -0.1851,
+        "z": 1.14,
+        "yaw": 2.9958
+      },
+      "nic_translation": 0.0114,
+      "nic_yaw": -0.0968,
+      "num_nic_cards": 1,
+      "gripper_z": 0.04245
+    },
+    "trial_21": {
+      "trial_id": "trial_21",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_2",
+      "target_module": "nic_card_mount_2",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.158,
+        "y": -0.182,
+        "z": 1.14,
+        "yaw": 2.9867
+      },
+      "nic_translation": -0.0258,
+      "nic_yaw": 0.0552,
+      "num_nic_cards": 2,
+      "gripper_z": 0.04245
+    },
+    "trial_22": {
+      "trial_id": "trial_22",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_3",
+      "target_module": "nic_card_mount_3",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1593,
+        "y": -0.1874,
+        "z": 1.14,
+        "yaw": 3.0272
+      },
+      "nic_translation": -0.0073,
+      "nic_yaw": 0.0817,
+      "num_nic_cards": 1,
+      "gripper_z": 0.04245
+    },
+    "trial_23": {
+      "trial_id": "trial_23",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_2",
+      "target_module": "nic_card_mount_2",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1591,
+        "y": -0.1872,
+        "z": 1.14,
+        "yaw": 3.0169
+      },
+      "nic_translation": 0.0262,
+      "nic_yaw": 0.1264,
+      "num_nic_cards": 2,
+      "gripper_z": 0.04245
+    },
+    "trial_24": {
+      "trial_id": "trial_24",
+      "plug_type": "sfp",
+      "cable_type": "sfp_sc_cable",
+      "target_rail": "nic_rail_2",
+      "target_module": "nic_card_mount_2",
+      "target_port": "sfp_port_0",
+      "board_pose": {
+        "x": 0.1581,
+        "y": -0.1822,
+        "z": 1.14,
+        "yaw": 2.9812
+      },
+      "nic_translation": 0.0204,
+      "nic_yaw": -0.0802,
+      "num_nic_cards": 1,
+      "gripper_z": 0.04245
+    }
+  }
+}

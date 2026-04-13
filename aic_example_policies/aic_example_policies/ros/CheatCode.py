@@ -229,7 +229,7 @@ class CheatCode(Policy):
             except TransformException as ex:
                 self.get_logger().warn(f"TF lookup failed during interpolation: {ex}")
 
-            if t <101:
+            if t < 101:
                 obs = get_observation()
                 w = obs.wrist_wrench.wrench
                 self.get_logger().info(
