@@ -36,3 +36,5 @@ known-first-party = [
 "aic_utils/**" = ["B018"]
 "zss_data/**" = ["UP031"]
 "zss_policy/**" = ["UP031"]
+"aic_policy/**" = ["F821", "B905"]
+"aic_example_policies/**" = ["B905"]
