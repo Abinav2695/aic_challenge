@@ -11,7 +11,10 @@ The simulation environment is defined in the [`aic_description`](./../aic_descri
 
 ### Robot
 
-The challenge utilizes a **Universal Robots UR5e** robotic arm, equipped with a **Robotiq Hand-E gripper** and an **Axia80 force-torque sensor**.
+The challenge utilizes a **Universal Robots UR5e** robotic arm, equipped with the following hardware:
+* **Gripper:** **Robotiq Hand-E**
+* **Force-Torque Sensor:** **ATI AXIA80-M20**
+* **Camera:** **Basler acA2440-20gc** with **Edmunds lens 58-000** (Resolution: 1152x1024, Frame Rate: 20 FPS)
 
 * **Configuration:** The robot's physical properties and setup are defined in the [`ur_gz.urdf.xacro`](../aic_description/urdf/ur_gz.urdf.xacro) file.
 * **Control:** The robot is operated via the `aic_controller`. For detailed interface and usage instructions, please refer to the [AIC Controller documentation](./aic_controller.md).
@@ -109,6 +112,33 @@ cp /tmp/aic.sdf ~/training_scenarios/nic_slot_2.sdf
 /entrypoint.sh spawn_task_board:=true task_board_yaw:=1.57 \
     sc_mount_rail_1_present:=true spawn_cable:=true ground_truth:=true start_aic_engine:=false
 cp /tmp/aic.sdf ~/training_scenarios/sc_right_rotated.sdf
+```
+
+### Programmatic Entity Spawning
+
+For training workflows that need to spawn or respawn entities (task boards, cables), the `/expand_xacro` service lets you expand xacro templates from model-side code without direct filesystem access to the eval environment.
+The following launch file includes the standard `aic_bringup` Gazebo stack along with the training utils:
+
+```bash
+ros2 launch aic_training_utils aic_training_gz_bringup.launch.py
+
+# spawn the task board
+ros2 service call /expand_xacro aic_training_interfaces/srv/ExpandXacro \
+  "{package_name: 'aic_description', relative_path: 'urdf/task_board.urdf.xacro', \
+    xacro_arguments: ['ground_truth:=true', 'nic_card_mount_0_present:=true']}"
+```
+
+The returned XML can then be passed to `/gz_server/spawn_entity` to spawn entities at arbitrary poses. Combined with `/gz_server/delete_entity`, this enables per-episode scene randomization (varying task board poses, rail positions, cable types, etc.) entirely from your training code.
+
+Inside the eval container, this can be started with `distrobox enter`:
+```bash
+distrobox enter aic_eval -- bash -lc '
+  source /ws_aic/install/setup.bash &&
+  ros2 launch aic_training_utils aic_training_gz_bringup.launch.py \
+    spawn_task_board:=true \
+    spawn_cable:=true \
+    nic_card_mount_2_present:=true
+'
 ```
 
 ### Teleoperation

@@ -18,15 +18,16 @@
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
+    EmitEvent,
     ExecuteProcess,
     IncludeLaunchDescription,
     OpaqueFunction,
     RegisterEventHandler,
     SetEnvironmentVariable,
-    Shutdown,
 )
 from launch.conditions import IfCondition, UnlessCondition
 from launch.event_handlers import OnProcessExit
+from launch.events import Shutdown
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import (
     Command,
@@ -41,6 +42,16 @@ from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 from ros_gz_bridge.actions import RosGzBridge
 from ros_gz_sim.actions import GzServer
+
+
+def on_aic_engine_exit(event, context):
+    if event.returncode != 0:
+        raise RuntimeError(f"aic_engine exited with code {event.returncode}")
+    return EmitEvent(
+        event=Shutdown(
+            reason=f"aic_engine exited cleanly with code {event.returncode})"
+        )
+    )
 
 
 def launch_setup(context, *args, **kwargs):
@@ -84,6 +95,13 @@ def launch_setup(context, *args, **kwargs):
     start_aic_engine = LaunchConfiguration("start_aic_engine")
     shutdown_on_aic_engine_exit = LaunchConfiguration("shutdown_on_aic_engine_exit")
     aic_engine_config_file = LaunchConfiguration("aic_engine_config_file")
+    model_discovery_timeout_seconds = LaunchConfiguration(
+        "model_discovery_timeout_seconds"
+    )
+    model_configure_timeout_seconds = LaunchConfiguration(
+        "model_configure_timeout_seconds"
+    )
+    gz_verbosity_level = LaunchConfiguration("gz_verbosity_level")
 
     gripper_initial_pos = "0.00655"
     cable_type_str = LaunchConfiguration("cable_type").perform(context)
@@ -227,21 +245,19 @@ def launch_setup(context, *args, **kwargs):
         executable="aic_engine",
         output="screen",
         parameters=[
-            {"config_file_path": aic_engine_config_file, "use_sim_time": True},
+            {
+                "config_file_path": aic_engine_config_file,
+                "use_sim_time": True,
+                "model_discovery_timeout_seconds": model_discovery_timeout_seconds,
+                "model_configure_timeout_seconds": model_configure_timeout_seconds,
+            },
         ],
         condition=IfCondition(start_aic_engine),
     )
 
     # Event handler to shutdown launch file when aic_engine exits
     shutdown_on_aic_engine_exit_handler = RegisterEventHandler(
-        OnProcessExit(
-            target_action=aic_engine,
-            on_exit=lambda event, context: [
-                Shutdown(
-                    reason=f"aic_engine exited with return code {event.returncode}"
-                )
-            ],
-        ),
+        OnProcessExit(target_action=aic_engine, on_exit=on_aic_engine_exit),
         condition=IfCondition(
             PythonExpression(
                 [
@@ -331,6 +347,7 @@ def launch_setup(context, *args, **kwargs):
         container_name="ros_gz_container",
         create_own_container="True",
         use_composition="True",
+        verbosity_level=gz_verbosity_level,
     )
 
     gzgui = ExecuteProcess(
@@ -756,7 +773,28 @@ def generate_launch_description():
             description="Absolute path to YAML file with the AIC engine configuration.",
         )
     )
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "model_configure_timeout_seconds",
+            default_value="60",
+            description="Timeout for model configuration checks.",
+        )
+    )
 
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "model_discovery_timeout_seconds",
+            default_value="30",
+            description="Timeout for discovering the participant model.",
+        )
+    )
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "gz_verbosity_level",
+            default_value="4",
+            description="Verbosity level of the Gazebo server (0=critical, 4=debug).",
+        )
+    )
     return LaunchDescription(
         declared_arguments + [OpaqueFunction(function=launch_setup)]
     )
